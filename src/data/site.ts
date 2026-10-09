@@ -24,7 +24,7 @@ export const business = {
 
 // Ölçüm kodları. Boş bırakılan servis siteye hiç yüklenmez.
 export const analytics = {
-  ga4Id: '', // ör. 'G-XXXXXXXXXX' (Google Analytics 4)
+  ga4Id: 'G-DWG28GLDVR', // ör. 'G-XXXXXXXXXX' (Google Analytics 4)
   cloudflareToken: '', // Cloudflare Web Analytics site token'ı
 };
 
