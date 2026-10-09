@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import Faq from '../components/Faq.astro';
+import CallButtons from '../components/CallButtons.astro';
+import { generalFaq, services } from '../data/site';
+const all = [...generalFaq, ...services.flatMap((s) => s.faq)];
+const schema = [{
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: all.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+}];
+---
+<Base title="Sık Sorulan Sorular | Tersane Lastik" description="Tersane Lastik hakkında sık sorulanlar: çalışma saatleri, lastik değişim süresi, jant kumlama ve jant düzeltme, fiyat bilgisi." breadcrumbs={[{ name: 'Sık sorulanlar', path: '/sss/' }]} schema={schema}>
+  <section class="hero"><div class="wrap single"><div>
+    <nav class="crumbs" aria-label="Sayfa yolu"><a href="/">Ana sayfa</a><span>/</span><span>Sık sorulanlar</span></nav>
+    <h1>Sık sorulanlar</h1>
+  </div></div></section>
+  <section class="block"><div class="wrap prose">
+    <Faq items={all} openFirst />
+    <p>Cevabını bulamadığınız bir soru varsa arayın.</p>
+    <CallButtons />
+  </div></section>
+</Base>

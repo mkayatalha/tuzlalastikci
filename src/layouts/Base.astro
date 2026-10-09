@@ -1,0 +1,194 @@
+---
+import '@fontsource/barlow-condensed/700.css';
+import '@fontsource/barlow-condensed/800.css';
+import '../styles/global.css';
+import { business, analytics, services } from '../data/site';
+
+interface Props {
+  title: string;
+  description: string;
+  breadcrumbs?: { name: string; path: string }[];
+  schema?: Record<string, unknown>[];
+}
+const { title, description, breadcrumbs = [], schema = [] } = Astro.props;
+const site = Astro.site!.toString().replace(/\/$/, '');
+const canonical = new URL(Astro.url.pathname, Astro.site).toString();
+const wa = business.whatsapp ? `https://wa.me/${business.whatsapp}` : '';
+
+const shop = {
+  '@context': 'https://schema.org',
+  '@type': 'TireShop',
+  '@id': `${site}/#isletme`,
+  name: business.name,
+  url: `${site}/`,
+  telephone: business.phoneE164,
+  image: `${site}/favicon.svg`,
+  priceRange: '₺₺',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: business.street,
+    postalCode: business.postalCode,
+    addressLocality: business.district,
+    addressRegion: business.city,
+    addressCountry: 'TR',
+  },
+  geo: { '@type': 'GeoCoordinates', latitude: business.geo.lat, longitude: business.geo.lng },
+  hasMap: business.mapsUrl,
+  sameAs: [business.instagram],
+  openingHoursSpecification: business.hours.map((h) => ({
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: h.schemaDays,
+    opens: h.open,
+    closes: h.close,
+  })),
+  alternateName: business.headline,
+  areaServed: ['Tuzla', 'Aydınlı', 'Orhanlı', 'İçmeler', 'Tuzla Tersaneler'],
+  makesOffer: services.map((s) => ({
+    '@type': 'Offer',
+    itemOffered: { '@type': 'Service', name: s.title, url: `${site}/hizmetler/${s.slug}/` },
+  })),
+};
+
+const crumbs = breadcrumbs.length
+  ? [{
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [{ name: 'Ana sayfa', path: '/' }, ...breadcrumbs].map((b, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: b.name,
+        item: `${site}${b.path}`,
+      })),
+    }]
+  : [];
+const jsonLd = [shop, ...crumbs, ...schema];
+---
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#0f2f4f" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="tr_TR" />
+  <meta property="og:site_name" content={business.name} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+  {analytics.ga4Id && (
+    <>
+      <script is:inline define:vars={{ id: analytics.ga4Id }}>
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { dataLayer.push(arguments); };
+        var granted = false;
+        try { granted = localStorage.getItem('cerez-onay') === 'evet'; } catch (e) {}
+        gtag('consent', 'default', {
+          ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied',
+          analytics_storage: granted ? 'granted' : 'denied',
+        });
+        gtag('js', new Date());
+        gtag('config', id);
+      </script>
+      <script async src={`https://www.googletagmanager.com/gtag/js?id=${analytics.ga4Id}`}></script>
+    </>
+  )}
+  {analytics.cloudflareToken && (
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={JSON.stringify({ token: analytics.cloudflareToken })}></script>
+  )}
+</head>
+<body>
+  <a class="skip" href="#icerik">İçeriğe geç</a>
+  <header class="site-head">
+    <div class="wrap">
+      <a class="brand" href="/">
+        <img src="/favicon.svg" width="38" height="38" alt="" />
+        <span><b>{business.name}</b><small>{business.tagline}</small></span>
+      </a>
+      <nav class="nav" aria-label="Ana menü">
+        <a href="/#hizmetler">Hizmetler</a>
+        <a href="/#bolgeler">Bölgeler</a>
+        <a href="/sss/">Sık sorulanlar</a>
+        <a href="/iletisim/">İletişim</a>
+      </nav>
+      <a class="head-call" href={`tel:${business.phoneE164}`} data-track="call">{business.phone}</a>
+    </div>
+  </header>
+
+  <main id="icerik">
+    <slot />
+  </main>
+
+  <footer class="site-foot">
+    <div class="wrap">
+      <div>
+        <h2>{business.name}</h2>
+        <p>{business.street}<br />{business.postalCode} {business.district} / {business.city}</p>
+        <p><a href={business.mapsUrl} data-track="directions" rel="noopener">Google Haritalar'da yol tarifi al</a></p>
+      </div>
+      <div>
+        <h2>Çalışma saatleri</h2>
+        {business.hours.map((h) => <p>{h.days}<br />{h.open} – {h.close}</p>)}
+      </div>
+      <div>
+        <h2>İletişim</h2>
+        <p><a href={`tel:${business.phoneE164}`} data-track="call">{business.phone}</a></p>
+        {wa && <p><a href={wa} data-track="whatsapp" rel="noopener">WhatsApp</a></p>}
+        <p><a href={business.instagram} rel="noopener">Instagram</a></p>
+      </div>
+      <div>
+        <h2>Hizmetler</h2>
+        {services.map((s) => <p><a href={`/hizmetler/${s.slug}/`}>{s.title}</a></p>)}
+      </div>
+    </div>
+    <div class="wrap legal">
+      <p>© {new Date().getFullYear()} {business.name} · <a href="/gizlilik/">Gizlilik ve çerezler</a></p>
+    </div>
+  </footer>
+
+  <div class="callbar" aria-label="Hızlı iletişim">
+    <a class="c" href={`tel:${business.phoneE164}`} data-track="call">Ara · {business.phone}</a>
+    {wa ? <a class="w" href={wa} data-track="whatsapp" rel="noopener">WhatsApp</a>
+        : <a class="w" href={business.mapsUrl} data-track="directions" rel="noopener">Yol tarifi</a>}
+  </div>
+
+  {analytics.ga4Id && (
+    <div class="consent" id="consent" hidden>
+      <p>Sitemizi geliştirmek için ziyaret istatistikleri tutuyoruz. <a href="/gizlilik/">Ayrıntılar</a></p>
+      <div>
+        <button type="button" id="consent-no">Reddet</button>
+        <button type="button" id="consent-yes">Kabul et</button>
+      </div>
+    </div>
+  )}
+
+  <script is:inline>
+    (function () {
+      // Telefon, WhatsApp ve yol tarifi tıklamalarını Analytics'e olay olarak gönder.
+      document.addEventListener('click', function (e) {
+        var a = e.target.closest && e.target.closest('[data-track]');
+        if (!a || typeof window.gtag !== 'function') return;
+        window.gtag('event', 'iletisim_tiklama', { yontem: a.getAttribute('data-track'), sayfa: location.pathname });
+      });
+
+      var box = document.getElementById('consent');
+      if (!box) return;
+      var saved = null;
+      try { saved = localStorage.getItem('cerez-onay'); } catch (e) {}
+      if (!saved) box.hidden = false;
+      function decide(v) {
+        try { localStorage.setItem('cerez-onay', v); } catch (e) {}
+        if (v === 'evet' && window.gtag) window.gtag('consent', 'update', { analytics_storage: 'granted' });
+        box.hidden = true;
+      }
+      document.getElementById('consent-yes').addEventListener('click', function () { decide('evet'); });
+      document.getElementById('consent-no').addEventListener('click', function () { decide('hayir'); });
+    })();
+  </script>
+</body>
+</html>

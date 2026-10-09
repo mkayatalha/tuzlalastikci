@@ -1,0 +1,17 @@
+<div class="status" id="open-status"><span class="dot"></span><span>Pzt–Cmt 08:00–23:30 · Pazar 11:00–18:00</span></div>
+<script is:inline>
+  (function () {
+    try {
+      var parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Istanbul', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
+      var get = function (t) { return (parts.find(function (p) { return p.type === t; }) || {}).value; };
+      var day = get('weekday'), m = parseInt(get('hour'), 10) * 60 + parseInt(get('minute'), 10);
+      var sun = day === 'Sun';
+      var o = sun ? 660 : 480, c = sun ? 1080 : 1410;
+      var open = m >= o && m < c;
+      var next = m >= c ? (day === 'Sat' ? '11:00' : '08:00') : (sun ? '11:00' : '08:00');
+      document.getElementById('open-status').innerHTML = open
+        ? '<span class="dot"></span><span>Şu an açık · ' + (sun ? '18:00' : '23:30') + "'da kapanır</span>"
+        : '<span class="dot closed"></span><span>Şu an kapalı · ' + next + "'de açılır</span>";
+    } catch (e) {}
+  })();
+</script>

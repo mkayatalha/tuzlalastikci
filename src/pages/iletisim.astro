@@ -1,0 +1,25 @@
+---
+import Base from '../layouts/Base.astro';
+import CallButtons from '../components/CallButtons.astro';
+import OpenStatus from '../components/OpenStatus.astro';
+import { business } from '../data/site';
+---
+<Base title="İletişim ve Yol Tarifi | Tersane Lastik" description={`Tersane Lastik (Tuzla lastikçi) adres ve telefon: ${business.street}, ${business.district}. Telefon ${business.phone}. Pzt–Cmt 08:00–23:30, Pazar 11:00–18:00.`} breadcrumbs={[{ name: 'İletişim', path: '/iletisim/' }]}>
+  <section class="hero"><div class="wrap single"><div>
+    <nav class="crumbs" aria-label="Sayfa yolu"><a href="/">Ana sayfa</a><span>/</span><span>İletişim</span></nav>
+    <h1>İletişim ve yol tarifi</h1>
+    <p class="lead">{business.street}, {business.postalCode} {business.district} / {business.city}</p>
+    <CallButtons variant="hero" />
+    <OpenStatus />
+  </div></div></section>
+  <section class="block"><div class="wrap prose">
+    <h2>Çalışma saatleri</h2>
+    {business.hours.map((h) => <p>{h.days}: {h.open} – {h.close}</p>)}
+    <h2>Telefon</h2>
+    <p><a href={`tel:${business.phoneE164}`} data-track="call">{business.phone}</a></p>
+    <h2>WhatsApp</h2>
+    <p><a href={`https://wa.me/${business.whatsapp}`} data-track="whatsapp" rel="noopener">{business.whatsappDisplay}</a></p>
+    <h2>Haritada</h2>
+    <p><a href={business.mapsUrl} data-track="directions" rel="noopener">Google Haritalar'da aç ve yol tarifi al</a></p>
+  </div></section>
+</Base>

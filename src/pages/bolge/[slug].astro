@@ -1,0 +1,51 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import CallButtons from '../../components/CallButtons.astro';
+import { business, services, areas, type Area } from '../../data/site';
+
+export function getStaticPaths() {
+  return areas.map((a) => ({ params: { slug: a.slug }, props: { a } }));
+}
+const { a } = Astro.props as { a: Area };
+const focus = a.focus.map((slug) => services.find((s) => s.slug === slug)!).filter(Boolean);
+const others = areas.filter((x) => x.slug !== a.slug);
+---
+<Base title={a.metaTitle} description={a.metaDescription} breadcrumbs={[{ name: `${a.name} lastikçi`, path: `/bolge/${a.slug}/` }]}>
+  <section class="hero">
+    <div class="wrap single">
+      <div>
+        <nav class="crumbs" aria-label="Sayfa yolu"><a href="/">Ana sayfa</a><span>/</span><span>{a.name}</span></nav>
+        <h1>{a.h1}</h1>
+        <p class="lead">{a.intro}</p>
+        <CallButtons variant="hero" />
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap split">
+      <div class="prose">
+        {a.body.map((p) => <p>{p}</p>)}
+        <h2>{a.name} için öne çıkan hizmetler</h2>
+        <div class="services" style="grid-template-columns:1fr">
+          {focus.map((s) => (
+            <a class="svc" href={`/hizmetler/${s.slug}/`}>
+              <Icon name={s.icon} />
+              <h3>{s.title}</h3>
+              <p>{s.short}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+      <aside class="side">
+        <h2>Adresimiz</h2>
+        <p>{business.street}<br />{business.postalCode} {business.district} / {business.city}</p>
+        {business.hours.map((h) => <p>{h.days}: {h.open} – {h.close}</p>)}
+        <CallButtons />
+        <h2>Diğer bölgeler</h2>
+        <ul>{others.map((o) => <li><a href={`/bolge/${o.slug}/`}>{o.name} lastikçi</a></li>)}</ul>
+      </aside>
+    </div>
+  </section>
+</Base>
