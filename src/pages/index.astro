@@ -1,0 +1,112 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import Faq from '../components/Faq.astro';
+import CallButtons from '../components/CallButtons.astro';
+import OpenStatus from '../components/OpenStatus.astro';
+import { business, services, areas, generalFaq } from '../data/site';
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: generalFaq.slice(0, 4).map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+<Base
+  title="Tuzla Lastikçi | Tersane Lastik · Lastik, Jant ve Yol Yardım"
+  description="Tersane Lastik: Tuzla'da lastik satış ve değişim, yetkili Hankook bayi, lastik oteli, jant kumlama, boyama ve jant düzeltme. Tersane bölgesine yakın, her gün 23:30'a kadar açık. 0216 446 15 60"
+  schema={[faqSchema]}
+>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <p class="label eyebrow">Tuzla · Evliya Çelebi · Tersane bölgesi</p>
+        <p class="brandline">{business.name}</p>
+        <h1>{business.headline}<span>Lastik, jant ve yol yardımı tek adreste</span></h1>
+        <p class="lead">Binek, ticari ve ağır vasıta lastiği; jant kumlama, boyama ve CNC jant düzeltme. Yetkili Hankook bayisi, lastik oteli ve yerinde yol yardım. Pazar hariç her gün gece 23:30'a kadar açığız.</p>
+        <CallButtons variant="hero" />
+        <OpenStatus />
+      </div>
+      <aside class="hero-card" aria-label="İletişim bilgileri">
+        <p class="rating">Google'da 2.000'den fazla müşteri yorumu</p>
+        <dl>
+          <dt>Adres</dt><dd>{business.street}, {business.postalCode} {business.district} / {business.city}</dd>
+          {business.hours.map((h) => (<><dt>{h.days}</dt><dd>{h.open} – {h.close}</dd></>))}
+          <dt>Telefon</dt><dd>{business.phone}</dd>
+          <dt>WhatsApp</dt><dd>{business.whatsappDisplay}</dd>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <section class="block" id="hizmetler">
+    <div class="wrap">
+      <div class="block-head"><h2>Hizmetlerimiz</h2></div>
+      <div class="services">
+        {services.map((s) => (
+          <a class="svc" href={`/hizmetler/${s.slug}/`}>
+            <Icon name={s.icon} />
+            <h3>{s.title}</h3>
+            <p>{s.short}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="block-head"><h2>Lastik ölçünüzü okuyun</h2><span class="label">Lastiğin yanağındaki kod</span></div>
+      <div class="decoder">
+        <div class="decoder-code" id="decoder" role="group" aria-label="Lastik ölçüsü parçaları">
+          <button type="button" data-k="w" aria-pressed="true">205</button>
+          <button type="button" data-k="a" aria-pressed="false">/55</button>
+          <button type="button" data-k="r" aria-pressed="false">R16</button>
+          <button type="button" data-k="l" aria-pressed="false">91</button>
+          <button type="button" data-k="s" aria-pressed="false">V</button>
+        </div>
+        <div class="decoder-out" aria-live="polite">
+          <strong id="dc-title">Genişlik</strong>
+          <p id="dc-text">Lastiğin tabanının milimetre cinsinden genişliği: 205 mm.</p>
+        </div>
+        <p>Bu kodu telefonda söylemeniz yeterli, stok ve fiyatı hemen söyleriz.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="bolgeler">
+    <div class="wrap">
+      <div class="block-head"><h2>Hizmet bölgeleri</h2></div>
+      <ul class="areas">
+        {areas.map((a) => <li><a href={`/bolge/${a.slug}/`}>{a.name} lastikçi</a></li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="block-head"><h2>Sık sorulanlar</h2><a href="/sss/">Tüm sorular</a></div>
+      <Faq items={generalFaq.slice(0, 4)} openFirst />
+    </div>
+  </section>
+
+  <script is:inline>
+    (function () {
+      var info = {
+        w: ['Genişlik', 'Lastiğin tabanının milimetre cinsinden genişliği: 205 mm.'],
+        a: ['Yanak oranı', 'Yanak yüksekliğinin genişliğe oranı. 55, yanağın genişliğin %55\'i, yani yaklaşık 113 mm olduğunu gösterir.'],
+        r: ['Jant çapı', 'R radyal yapıyı, 16 ise lastiğin oturduğu jantın inç cinsinden çapını gösterir.'],
+        l: ['Yük endeksi', '91, lastik başına en fazla 615 kg taşıma kapasitesi demektir.'],
+        s: ['Hız endeksi', 'V, lastiğin en fazla 240 km/s hıza göre üretildiğini gösterir.']
+      };
+      var btns = document.querySelectorAll('#decoder button');
+      btns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          btns.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+          document.getElementById('dc-title').textContent = info[b.dataset.k][0];
+          document.getElementById('dc-text').textContent = info[b.dataset.k][1];
+        });
+      });
+    })();
+  </script>
+</Base>

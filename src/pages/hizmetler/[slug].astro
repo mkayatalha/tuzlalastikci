@@ -1,0 +1,62 @@
+---
+import Base from '../../layouts/Base.astro';
+import Faq from '../../components/Faq.astro';
+import CallButtons from '../../components/CallButtons.astro';
+import { business, services, areas, type Service } from '../../data/site';
+
+export function getStaticPaths() {
+  return services.map((s) => ({ params: { slug: s.slug }, props: { s } }));
+}
+const { s } = Astro.props as { s: Service };
+const site = Astro.site!.toString().replace(/\/$/, '');
+const others = services.filter((x) => x.slug !== s.slug);
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: s.title,
+    serviceType: s.title,
+    url: `${site}/hizmetler/${s.slug}/`,
+    provider: { '@id': `${site}/#isletme` },
+    areaServed: { '@type': 'City', name: 'Tuzla' },
+  },
+  ...(s.faq.length ? [{
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: s.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  }] : []),
+];
+---
+<Base title={s.metaTitle} description={s.metaDescription} breadcrumbs={[{ name: s.title, path: `/hizmetler/${s.slug}/` }]} schema={schema}>
+  <section class="hero">
+    <div class="wrap single">
+      <div>
+        <nav class="crumbs" aria-label="Sayfa yolu"><a href="/">Ana sayfa</a><span>/</span><span>{s.title}</span></nav>
+        <h1>{s.h1}</h1>
+        <p class="lead">{s.short}</p>
+        <CallButtons variant="hero" />
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap split">
+      <div class="prose">
+        {s.body.map((p) => <p>{p}</p>)}
+        <h2>Neler yapıyoruz?</h2>
+        <ul class="checks">{s.bullets.map((b) => <li>{b}</li>)}</ul>
+        {s.faq.length > 0 && (<><h2>Sık sorulanlar</h2><Faq items={s.faq} /></>)}
+      </div>
+      <aside class="side">
+        <h2>{business.name}</h2>
+        <p>{business.street}, {business.district}</p>
+        {business.hours.map((h) => <p>{h.days}: {h.open} – {h.close}</p>)}
+        <CallButtons />
+        <h2>Diğer hizmetler</h2>
+        <ul>{others.map((o) => <li><a href={`/hizmetler/${o.slug}/`}>{o.title}</a></li>)}</ul>
+        <h2>Bölgeler</h2>
+        <ul>{areas.map((a) => <li><a href={`/bolge/${a.slug}/`}>{a.name} lastikçi</a></li>)}</ul>
+      </aside>
+    </div>
+  </section>
+</Base>

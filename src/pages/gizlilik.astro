@@ -1,0 +1,13 @@
+---
+import Base from '../layouts/Base.astro';
+import { business } from '../data/site';
+---
+<Base title="Gizlilik ve Çerezler | Tersane Lastik" description="Tersane Lastik web sitesinin gizlilik ve çerez bilgilendirmesi.">
+  <section class="block"><div class="wrap prose">
+    <h1 style="font-size:2.4rem">Gizlilik ve çerezler</h1>
+    <p>Bu site, ziyaretçi sayısını ve hangi sayfaların okunduğunu anlamak için Cloudflare Web Analytics ve, onay vermeniz halinde, Google Analytics kullanır. Cloudflare Web Analytics çerez kullanmaz.</p>
+    <p>Google Analytics yalnızca çerez bildirimindeki "Kabul et" düğmesine bastığınızda çerez yerleştirir. Bu istatistikler sitenin geliştirilmesi dışında kullanılmaz ve kimliğinizi belirlemek için kullanılmaz.</p>
+    <p>Sitede form yoktur; adınız, telefonunuz gibi kişisel bilgiler toplanmaz.</p>
+    <p>Sorularınız için: {business.name}, {business.street}, {business.district} / {business.city} · {business.phone}</p>
+  </div></section>
+</Base>
