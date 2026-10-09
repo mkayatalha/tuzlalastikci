@@ -1,6 +1,5 @@
 # tuzlalastikci
 Tuzla'da bir lastikçi ve yol yardımı hizmetine erişim için yapılmış modern bir web sitesi. Astro ile yapılmış statik site; Cloudflare Pages'te ücretsiz yayınlanır.
-Astro ile yapılmış statik site. Cloudflare Pages'te ücretsiz yayınlanır.
 
 ## Bilgileri değiştirmek
 İşletme bilgileri, hizmet ve bölge metinleri tek dosyada: `src/data/site.ts`.
