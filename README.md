@@ -1,2 +1,2 @@
 # tuzlalastikci
-Tuzlada br lastikci ve yol yardım modern websitesidir.
+Tuzlada bir lastikci ve yol yardımı hizmetine erişim için yapılmış modern bir websitesidir.
