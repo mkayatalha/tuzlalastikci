@@ -1,0 +1,686 @@
+---
+// Dükkan paneli arayüzü (stok + lastik oteli). demo=true ise sunucu yerine
+// tarayıcıdaki örnek verilerle çalışır (public/panel-demo/mock.js).
+interface Props { demo?: boolean }
+const { demo = false } = Astro.props;
+---
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>{demo ? 'Panel demosu · Tersane Lastik' : 'Panel · Tersane Lastik'}</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style is:global>
+    :root {
+      --bg: #eef0f2; --surface: #fff; --ink: #141b24; --muted: #56616e; --line: #d3d8de;
+      --navy: #0f2f4f; --navy-ink: #f2f6fa; --signal: #c9520f; --signal-ink: #fff;
+      --ok: #1a7f47; --warn: #b42318; --warn-bg: #fde8e6; --chip: #e3e8ee;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1419; --surface: #172029; --ink: #e8edf2; --muted: #9aa7b4; --line: #2a3643;
+        --navy: #13385d; --signal: #f07a35; --signal-ink: #1a0d05; --ok: #4cc283;
+        --warn: #ff8a80; --warn-bg: #3a1a18; --chip: #22303d; color-scheme: dark;
+      }
+    }
+    * { box-sizing: border-box }
+    html { -webkit-text-size-adjust: 100% }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 400 1rem/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif }
+    button, input, select, textarea { font: inherit; color: inherit }
+    [hidden] { display: none !important }
+    :focus-visible { outline: 3px solid var(--signal); outline-offset: 2px }
+
+    .top { background: var(--navy); color: var(--navy-ink); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5 }
+    .top-in { max-width: 960px; margin: 0 auto; padding-top: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px }
+    .brand { font-weight: 700; letter-spacing: .02em }
+    .who { margin-left: auto; font-size: .8125rem; opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60vw }
+    .tabs { display: flex; gap: 2px; width: 100%; overflow-x: auto }
+    .tab { background: none; border: 0; color: inherit; opacity: .75; padding: 10px 12px; border-bottom: 3px solid transparent; cursor: pointer; white-space: nowrap; font-weight: 600 }
+    .tab[aria-selected="true"] { opacity: 1; border-color: var(--signal) }
+
+    main { max-width: 960px; margin: 0 auto; padding-block: 16px 96px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+    .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px }
+    .search { flex: 1 1 260px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 1.0625rem }
+    select.f { padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); max-width: 100% }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap }
+    .chip { border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: .9375rem }
+    .chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink) }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 4px 0 14px }
+    .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px }
+    .stat b { display: block; font-size: 1.375rem; line-height: 1.1; font-variant-numeric: tabular-nums }
+    .stat span { font-size: .8125rem; color: var(--muted) }
+    .stat.warn b { color: var(--warn) }
+
+    .list { display: grid; gap: 8px }
+    .row { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center }
+    .row.low { border-color: var(--warn) }
+    .row-main { min-width: 0; cursor: pointer; background: none; border: 0; padding: 0; text-align: left }
+    .size { font-weight: 700; font-size: 1.125rem; font-variant-numeric: tabular-nums }
+    .sub { color: var(--muted); font-size: .9375rem; overflow-wrap: anywhere }
+    .badges { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px }
+    .badge { font-size: .75rem; padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--ink) }
+    .badge.warn { background: var(--warn-bg); color: var(--warn); font-weight: 600 }
+    .badge.ok { color: var(--ok); font-weight: 600 }
+    .qty { display: flex; align-items: center; gap: 6px }
+    .qty b { min-width: 2.5ch; text-align: center; font-size: 1.375rem; font-variant-numeric: tabular-nums }
+    .qbtn { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 1.375rem; cursor: pointer; line-height: 1 }
+    .qbtn:disabled { opacity: .4 }
+    .actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap }
+
+    .btn { border: 1px solid var(--line); background: var(--surface); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px }
+    .btn.primary { background: var(--signal); color: var(--signal-ink); border-color: var(--signal) }
+    .btn.danger { color: var(--warn) }
+    .btn.small { padding: 6px 10px; font-size: .875rem }
+    .fab { position: fixed; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 4; box-shadow: 0 4px 16px rgb(0 0 0 / .25); padding: 14px 18px; border-radius: 999px }
+    .empty { text-align: center; color: var(--muted); padding: 32px 8px }
+    .tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px }
+
+    dialog { border: 0; border-radius: 14px; padding: 0; width: min(560px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); background: var(--surface); color: var(--ink) }
+    dialog::backdrop { background: rgb(0 0 0 / .5) }
+    .dlg { padding: 16px; display: grid; gap: 12px }
+    .dlg h2 { margin: 0; font-size: 1.25rem }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+    .fld { display: grid; gap: 4px; min-width: 0 }
+    .fld > span { font-size: .8125rem; color: var(--muted); font-weight: 600 }
+    .fld input, .fld select, .fld textarea { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg) }
+    .check { display: flex; gap: 8px; align-items: flex-start; font-size: .9375rem }
+    .check input { width: 20px; height: 20px; margin: 2px 0 0; flex: none }
+    .dlg-foot { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap }
+    .dlg-foot .left { margin-right: auto }
+    .sect { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 10px }
+    .hist { font-size: .875rem; display: grid; gap: 4px; max-height: 200px; overflow: auto }
+    .hist div { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px dashed var(--line); padding: 4px 0 }
+    .plus { color: var(--ok); font-weight: 700 } .minus { color: var(--warn); font-weight: 700 }
+    .toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; z-index: 20; max-width: calc(100vw - 32px) }
+    .toast.err { background: var(--warn); color: #fff }
+    .proto { background: var(--warn-bg); color: var(--ink); font-size: .8125rem; padding: 8px 16px; text-align: center }
+    .note { font-size: .8125rem; color: var(--muted) }
+    @media (max-width: 420px) { .grid2 { grid-template-columns: 1fr } .stats .stat b { font-size: 1.125rem } }
+  </style>
+</head>
+<body>
+  {demo && <div class="proto">Demo · örnek verilerle çalışır, sayfa yenilenince başa döner. Gerçek panelde veriler kalıcıdır ve giriş gerekir.</div>}
+  {demo && <script is:inline src="/panel-demo/mock.js"></script>}
+  <header class="top">
+    <div class="top-in">
+      <span class="brand">Tersane Lastik · Panel</span>
+      <span class="who" id="who"></span>
+      <nav class="tabs" role="tablist">
+        <button class="tab" role="tab" data-tab="stok" aria-selected="true">Stok</button>
+        <button class="tab" role="tab" data-tab="otel" aria-selected="false">Lastik oteli</button>
+        <button class="tab" role="tab" data-tab="hareket" aria-selected="false">Hareketler</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- STOK -->
+    <section id="view-stok">
+      <div class="bar">
+        <input class="search" id="q" type="search" placeholder="Ölçü veya marka ara (ör. 2055516)" autocomplete="off" inputmode="search" />
+      </div>
+      <div class="bar">
+        <div class="chips" id="seasonChips">
+          <button class="chip" data-v="" aria-pressed="true">Tümü</button>
+          <button class="chip" data-v="yaz" aria-pressed="false">Yaz</button>
+          <button class="chip" data-v="kis" aria-pressed="false">Kış</button>
+          <button class="chip" data-v="4mevsim" aria-pressed="false">4 mevsim</button>
+          <button class="chip" data-v="low" aria-pressed="false">Azalanlar</button>
+        </div>
+        <select class="f" id="brandF" aria-label="Marka"><option value="">Tüm markalar</option></select>
+        <select class="f" id="catF" aria-label="Tür">
+          <option value="">Tüm türler</option>
+          <option value="binek">Binek</option><option value="suv">SUV / 4x4</option>
+          <option value="hafif_ticari">Hafif ticari</option><option value="agir_ticari">Ağır ticari</option>
+        </select>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="sKinds">0</b><span>çeşit</span></div>
+        <div class="stat"><b id="sTotal">0</b><span>toplam adet</span></div>
+        <div class="stat warn"><b id="sLow">0</b><span>azalan</span></div>
+      </div>
+      <div class="list" id="tireList"></div>
+      <div class="tools">
+        <button class="btn small" id="importBtn">Excel'den aktar (CSV)</button>
+        <button class="btn small" id="exportBtn">Stoğu indir (CSV)</button>
+        <input type="file" id="importFile" accept=".csv,text/csv" hidden />
+      </div>
+      <button class="btn primary fab" id="addTire">+ Lastik ekle</button>
+    </section>
+
+    <!-- OTEL -->
+    <section id="view-otel" hidden>
+      <div class="bar">
+        <input class="search" id="hq" type="search" placeholder="İsim, telefon veya plaka ara" autocomplete="off" />
+      </div>
+      <div class="bar">
+        <div class="chips" id="hotelChips">
+          <button class="chip" data-v="in" aria-pressed="true">Depoda</button>
+          <button class="chip" data-v="out" aria-pressed="false">Teslim edilen</button>
+          <button class="chip" data-v="" aria-pressed="false">Tümü</button>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="hIn">0</b><span>depodaki set</span></div>
+        <div class="stat"><b id="hTires">0</b><span>depodaki lastik</span></div>
+        <div class="stat"><b id="hCust">0</b><span>müşteri</span></div>
+      </div>
+      <div class="list" id="hotelList"></div>
+      <div class="tools"><button class="btn small" id="hotelExport">Otel listesini indir (CSV)</button></div>
+      <button class="btn primary fab" id="addHotel" hidden>+ Yeni kayıt</button>
+    </section>
+
+    <!-- HAREKETLER -->
+    <section id="view-hareket" hidden>
+      <p class="note" style="margin:0 0 12px">Son 100 stok hareketi</p>
+      <div class="list" id="moveList"></div>
+    </section>
+  </main>
+
+  <!-- Lastik formu -->
+  <dialog id="tireDlg">
+    <form class="dlg" id="tireForm" method="dialog">
+      <h2 id="tireTitle">Lastik ekle</h2>
+      <div class="grid2">
+        <label class="fld"><span>Marka *</span><input name="brand" list="brandList" required maxlength="60" /></label>
+        <label class="fld"><span>Model</span><input name="model" maxlength="80" placeholder="ör. Ventus Prime 4" /></label>
+        <label class="fld"><span>Ölçü *</span><input name="size" required maxlength="40" placeholder="205/55 R16" /></label>
+        <label class="fld"><span>Yük / hız endeksi</span><input name="load_speed" maxlength="20" placeholder="91V" /></label>
+        <label class="fld"><span>Mevsim</span><select name="season"><option value="yaz">Yaz</option><option value="kis">Kış</option><option value="4mevsim">4 mevsim</option></select></label>
+        <label class="fld"><span>Tür</span><select name="category"><option value="binek">Binek</option><option value="suv">SUV / 4x4</option><option value="hafif_ticari">Hafif ticari</option><option value="agir_ticari">Ağır ticari</option></select></label>
+        <label class="fld" id="qtyFld"><span>Adet</span><input name="quantity" type="number" min="0" inputmode="numeric" value="0" /></label>
+        <label class="fld"><span>Uyarı sınırı</span><input name="min_qty" type="number" min="0" inputmode="numeric" value="4" /></label>
+        <label class="fld"><span>Üretim yılı (DOT)</span><input name="dot_year" type="number" min="2000" max="2100" inputmode="numeric" placeholder="2025" /></label>
+        <label class="fld"><span>Satış fiyatı (₺)</span><input name="price" inputmode="decimal" placeholder="isteğe bağlı" /></label>
+      </div>
+      <label class="fld"><span>Not</span><input name="note" maxlength="500" placeholder="ör. arka raf" /></label>
+      <div class="sect" id="moveSect" hidden>
+        <strong>Stok hareketi</strong>
+        <div class="grid2">
+          <label class="fld"><span>Adet</span><input id="mvQty" type="number" min="1" inputmode="numeric" value="1" /></label>
+          <label class="fld"><span>Sebep</span><select id="mvReason"><option value="alis">Mal geldi (+)</option><option value="satis">Satış (−)</option><option value="iade">İade (+)</option><option value="duzeltme_arti">Sayım düzeltme (+)</option><option value="duzeltme_eksi">Sayım düzeltme (−)</option></select></label>
+        </div>
+        <label class="fld"><span>Açıklama</span><input id="mvNote" maxlength="200" placeholder="ör. fatura no, müşteri" /></label>
+        <div><button type="button" class="btn small" id="mvApply">Hareketi kaydet</button></div>
+        <div class="hist" id="tireHist"></div>
+      </div>
+      <div class="dlg-foot">
+        <button type="button" class="btn danger left" id="tireDel" hidden>Sil</button>
+        <button type="button" class="btn" data-close>Vazgeç</button>
+        <button type="submit" class="btn primary" value="save">Kaydet</button>
+      </div>
+    </form>
+  </dialog>
+  <datalist id="brandList"></datalist>
+  <dialog id="askDlg"><div class="dlg"><p id="askMsg" style="margin:0;white-space:pre-line"></p><div class="dlg-foot" id="askFoot"></div></div></dialog>
+
+  <!-- Otel formu -->
+  <dialog id="hotelDlg">
+    <form class="dlg" id="hotelForm" method="dialog">
+      <h2 id="hotelTitle">Lastik oteli kaydı</h2>
+      <div class="grid2">
+        <label class="fld"><span>Ad soyad *</span><input name="name" required maxlength="80" autocomplete="off" /></label>
+        <label class="fld"><span>Telefon *</span><input name="phone" required type="tel" inputmode="tel" placeholder="05xx xxx xx xx" /></label>
+        <label class="fld"><span>Plaka</span><input name="plate" maxlength="20" placeholder="34 ABC 123" style="text-transform:uppercase" /></label>
+        <label class="fld"><span>Araç</span><input name="vehicle" maxlength="80" placeholder="ör. Fiat Doblo" /></label>
+        <label class="fld"><span>Lastik markası</span><input name="brand" list="brandList" maxlength="60" /></label>
+        <label class="fld"><span>Ölçü</span><input name="size" maxlength="40" placeholder="205/55 R16" /></label>
+        <label class="fld"><span>Mevsim</span><select name="season"><option value="kis">Kış</option><option value="yaz">Yaz</option><option value="4mevsim">4 mevsim</option></select></label>
+        <label class="fld"><span>Adet</span><input name="count" type="number" min="1" max="20" value="4" inputmode="numeric" /></label>
+        <label class="fld"><span>Diş derinliği (mm)</span><input name="tread_mm" inputmode="decimal" placeholder="ör. 6" /></label>
+        <label class="fld"><span>Raf / konum</span><input name="shelf" maxlength="40" placeholder="ör. A-12" /></label>
+        <label class="fld"><span>Giriş tarihi</span><input name="check_in" type="date" /></label>
+        <label class="fld"><span>Ücret (₺)</span><input name="fee" inputmode="decimal" placeholder="isteğe bağlı" /></label>
+      </div>
+      <label class="check"><input type="checkbox" name="with_rim" /> Jantlı teslim alındı</label>
+      <label class="fld"><span>Not</span><input name="note" maxlength="500" placeholder="ör. sağ ön lastikte yanak hasarı" /></label>
+      <label class="check"><input type="checkbox" name="kvkk_ok" /> Müşteriye kişisel verilerin (ad, telefon, plaka) yalnızca lastik oteli hizmeti için saklanacağı söylendi ve onay alındı.</label>
+      <div class="dlg-foot">
+        <button type="button" class="btn danger left" id="hotelDel" hidden>Sil</button>
+        <button type="button" class="btn" data-close>Vazgeç</button>
+        <button type="submit" class="btn primary" value="save">Kaydet</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    type Tire = { id: number; brand: string; model: string; size: string; load_speed: string; season: string; category: string; dot_year: number | null; quantity: number; min_qty: number; price: number | null; note: string; updated_at: string };
+    type Hotel = { id: number; customer_id: number; name: string; phone: string; kvkk_ok: number; plate: string; vehicle: string; brand: string; size: string; season: string; count: number; with_rim: number; tread_mm: number | null; shelf: string; fee: number | null; note: string; check_in: string; check_out: string | null };
+    type Move = { id: number; tire_id: number; delta: number; reason: string; note: string; user_email: string; created_at: string; brand?: string; model?: string; size?: string };
+
+    const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
+    const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+    const SEASON: Record<string, string> = { yaz: 'Yaz', kis: 'Kış', '4mevsim': '4 mevsim' };
+    const CAT: Record<string, string> = { binek: 'Binek', suv: 'SUV / 4x4', hafif_ticari: 'Hafif ticari', agir_ticari: 'Ağır ticari' };
+    const REASON: Record<string, string> = { satis: 'Satış', alis: 'Mal geldi', iade: 'İade', duzeltme: 'Sayım düzeltme', ilk_kayit: 'İlk kayıt' };
+    const tl = (n: number | null) => (n == null ? '' : n.toLocaleString('tr-TR', { maximumFractionDigits: 2 }) + ' ₺');
+    const trDate = (s: string | null) => (s ? new Date(s.length === 10 ? s + 'T12:00:00' : s.replace(' ', 'T') + 'Z').toLocaleDateString('tr-TR') : '');
+    const trDateTime = (s: string) => new Date(s.replace(' ', 'T') + 'Z').toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const lower = (s: string) => s.toLocaleLowerCase('tr-TR');
+    // Ölçü araması: "205/55 R16", "205 55 16" ve "2055516" aynı sonucu verir.
+    const digits = (s: string) => s.replace(/[^0-9.]/g, '');
+
+    let tires: Tire[] = [];
+    let hotel: Hotel[] = [];
+    let season = '';
+    let hotelState = 'in';
+
+    function toast(msg: string, err = false) {
+      const t = document.createElement('div');
+      t.className = 'toast' + (err ? ' err' : '');
+      t.textContent = msg;
+      document.body.append(t);
+      setTimeout(() => t.remove(), err ? 4000 : 2000);
+    }
+
+    async function api<T = any>(path: string, opts: { method?: string; body?: unknown } = {}): Promise<T> {
+      const res = await fetch('/api/panel/' + path, {
+        method: opts.method || 'GET',
+        headers: { 'Content-Type': 'application/json', 'X-Panel': '1' },
+        body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+        credentials: 'same-origin',
+      });
+      let data: any = null;
+      try { data = await res.json(); } catch {}
+      if (!res.ok) {
+        if (res.status === 401) { location.reload(); }
+        throw new Error(data?.error || 'Bağlantı hatası');
+      }
+      return data;
+    }
+    const run = (p: Promise<unknown>) => p.catch((e) => toast(e.message, true));
+
+    // ---------- Sekmeler ----------
+    function showTab(name: string) {
+      document.querySelectorAll<HTMLElement>('.tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+      for (const v of ['stok', 'otel', 'hareket']) $('#view-' + v).hidden = v !== name;
+      $('#addTire').hidden = name !== 'stok';
+      $('#addHotel').hidden = name !== 'otel';
+      if (name === 'hareket') run(loadMoves());
+      try { sessionStorage.setItem('panelTab', name); } catch {}
+    }
+    document.querySelectorAll<HTMLElement>('.tab').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab!)));
+
+    function chipGroup(sel: string, onChange: (v: string) => void) {
+      const box = $(sel);
+      box.addEventListener('click', (e) => {
+        const b = (e.target as HTMLElement).closest<HTMLElement>('.chip');
+        if (!b) return;
+        box.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+        onChange(b.dataset.v || '');
+      });
+    }
+
+    // ---------- Stok ----------
+    function renderTires() {
+      const q = lower($<HTMLInputElement>('#q').value.trim());
+      const qd = digits(q);
+      const words = q.split(/\s+/).filter((w) => w && !/^[0-9./r]+$/.test(w));
+      const brand = $<HTMLSelectElement>('#brandF').value;
+      const cat = $<HTMLSelectElement>('#catF').value;
+      const list = tires.filter((t) => {
+        if (season === 'low') { if (t.quantity > t.min_qty) return false; }
+        else if (season && t.season !== season) return false;
+        if (brand && t.brand !== brand) return false;
+        if (cat && t.category !== cat) return false;
+        if (q) {
+          const text = lower(`${t.brand} ${t.model} ${t.size} ${t.load_speed} ${t.note}`);
+          if (qd.length >= 2 && !digits(t.size).includes(qd) && !text.includes(q)) return false;
+          if (words.length && !words.every((w) => text.includes(w))) return false;
+        }
+        return true;
+      });
+      $('#sKinds').textContent = String(list.length);
+      $('#sTotal').textContent = String(list.reduce((a, t) => a + t.quantity, 0));
+      $('#sLow').textContent = String(tires.filter((t) => t.quantity <= t.min_qty).length);
+      $('#tireList').innerHTML = list.length
+        ? list.map((t) => {
+            const low = t.quantity <= t.min_qty;
+            return `<div class="row${low ? ' low' : ''}" data-id="${t.id}">
+              <button class="row-main" data-edit="${t.id}" aria-label="Düzenle">
+                <div class="size">${esc(t.size)} ${esc(t.load_speed)}</div>
+                <div class="sub">${esc(t.brand)} ${esc(t.model)}${t.price != null ? ' · ' + tl(t.price) : ''}</div>
+                <div class="badges"><span class="badge">${SEASON[t.season] || ''}</span><span class="badge">${CAT[t.category] || ''}</span>${t.dot_year ? `<span class="badge">DOT ${t.dot_year}</span>` : ''}${low ? `<span class="badge warn">${t.quantity === 0 ? 'Tükendi' : 'Azaldı'}</span>` : ''}</div>
+              </button>
+              <div class="qty">
+                <button class="qbtn" data-d="-1" data-id="${t.id}" aria-label="1 sat" ${t.quantity ? '' : 'disabled'}>−</button>
+                <b>${t.quantity}</b>
+                <button class="qbtn" data-d="1" data-id="${t.id}" aria-label="1 ekle">+</button>
+              </div>
+            </div>`;
+          }).join('')
+        : `<div class="empty">${tires.length ? 'Aramaya uyan lastik yok.' : 'Henüz lastik eklenmedi. Sağ alttaki “+ Lastik ekle” ile başlayın veya Excel listenizi aktarın.'}</div>`;
+    }
+
+    function refreshBrands() {
+      const brands = [...new Set([...tires.map((t) => t.brand), ...hotel.map((h) => h.brand)].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'tr'));
+      const sel = $<HTMLSelectElement>('#brandF');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">Tüm markalar</option>' + tires.map((t) => t.brand).filter((b, i, a) => a.indexOf(b) === i).sort((a, b) => a.localeCompare(b, 'tr')).map((b) => `<option${b === cur ? ' selected' : ''}>${esc(b)}</option>`).join('');
+      $('#brandList').innerHTML = [...new Set(['Hankook', 'Laufenn', 'Michelin', 'Continental', 'Bridgestone', 'Pirelli', 'Goodyear', 'Lassa', 'Petlas', 'Kumho', ...brands])].map((b) => `<option value="${esc(b)}">`).join('');
+    }
+
+    async function loadTires() {
+      tires = await api<Tire[]>('tires');
+      refreshBrands();
+      renderTires();
+    }
+
+    function upsertLocal(t: Tire) {
+      const i = tires.findIndex((x) => x.id === t.id);
+      if (i >= 0) tires[i] = t; else tires.push(t);
+      tires.sort((a, b) => a.brand.localeCompare(b.brand, 'tr') || a.size.localeCompare(b.size) || a.model.localeCompare(b.model, 'tr'));
+    }
+
+    async function move(id: number, delta: number, reason?: string, note?: string) {
+      const t = await api<Tire>(`tires/${id}/move`, { method: 'POST', body: { delta, reason, note } });
+      upsertLocal(t);
+      renderTires();
+      return t;
+    }
+
+    chipGroup('#seasonChips', (v) => { season = v; renderTires(); });
+    $('#q').addEventListener('input', renderTires);
+    $('#brandF').addEventListener('change', renderTires);
+    $('#catF').addEventListener('change', renderTires);
+    $('#tireList').addEventListener('click', (e) => {
+      const el = e.target as HTMLElement;
+      const q = el.closest<HTMLButtonElement>('.qbtn');
+      if (q) {
+        q.disabled = true;
+        const d = Number(q.dataset.d);
+        run(move(Number(q.dataset.id), d).then(() => toast(d < 0 ? '1 adet satış düşüldü' : '1 adet eklendi')));
+        return;
+      }
+      const ed = el.closest<HTMLElement>('[data-edit]');
+      if (ed) openTire(tires.find((t) => t.id === Number(ed.dataset.edit)));
+    });
+
+    let editing: Tire | undefined;
+    const tireForm = $<HTMLFormElement>('#tireForm');
+    function fillForm(form: HTMLFormElement, obj: Record<string, any>) {
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) {
+        if (!el.name) continue;
+        const v = obj[el.name];
+        if (el.type === 'checkbox') el.checked = !!v;
+        else el.value = v == null ? '' : String(v);
+      }
+    }
+    function formData(form: HTMLFormElement) {
+      const o: Record<string, any> = {};
+      for (const el of Array.from(form.elements) as HTMLInputElement[]) {
+        if (!el.name) continue;
+        o[el.name] = el.type === 'checkbox' ? el.checked : el.value;
+      }
+      return o;
+    }
+
+    async function openTire(t?: Tire) {
+      editing = t;
+      $('#tireTitle').textContent = t ? 'Lastiği düzenle' : 'Lastik ekle';
+      fillForm(tireForm, t || { season: 'yaz', category: 'binek', quantity: 0, min_qty: 4 });
+      $('#qtyFld').hidden = !!t;
+      $('#moveSect').hidden = !t;
+      $('#tireDel').hidden = !t;
+      $<HTMLInputElement>('#mvQty').value = '1';
+      $<HTMLInputElement>('#mvNote').value = '';
+      $('#tireHist').innerHTML = '';
+      $<HTMLDialogElement>('#tireDlg').showModal();
+      if (t) {
+        const moves = await api<Move[]>(`tires/${t.id}/moves`).catch(() => []);
+        $('#tireHist').innerHTML = `<div><b>Mevcut stok</b><b>${t.quantity} adet</b></div>` + moves.map((m) => `<div><span>${trDateTime(m.created_at)} · ${REASON[m.reason] || m.reason}${m.note ? ' · ' + esc(m.note) : ''}</span><span class="${m.delta > 0 ? 'plus' : 'minus'}">${m.delta > 0 ? '+' : ''}${m.delta}</span></div>`).join('');
+      }
+    }
+    $('#addTire').addEventListener('click', () => openTire());
+    tireForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = formData(tireForm);
+      run((async () => {
+        const t = editing ? await api<Tire>(`tires/${editing.id}`, { method: 'PUT', body: data }) : await api<Tire>('tires', { method: 'POST', body: data });
+        upsertLocal(t);
+        refreshBrands();
+        renderTires();
+        $<HTMLDialogElement>('#tireDlg').close();
+        toast('Kaydedildi');
+      })());
+    });
+    $('#mvApply').addEventListener('click', () => {
+      if (!editing) return;
+      const n = Math.abs(Number($<HTMLInputElement>('#mvQty').value) || 0);
+      if (!n) return toast('Adet girin', true);
+      let reason = $<HTMLSelectElement>('#mvReason').value;
+      const neg = reason === 'satis' || reason === 'duzeltme_eksi';
+      if (reason.startsWith('duzeltme')) reason = 'duzeltme';
+      run(move(editing.id, neg ? -n : n, reason, $<HTMLInputElement>('#mvNote').value).then((t) => { toast('Hareket kaydedildi'); openTire(t); }));
+    });
+    $('#tireDel').addEventListener('click', () => {
+      if (!editing) return;
+      const id = editing.id;
+      run(ask(`${editing.brand} ${editing.size} kaydı ve hareket geçmişi silinsin mi?`, [['iptal', 'Vazgeç'], ['ok', 'Sil', 'danger']]).then(async (a) => {
+        if (a !== 'ok') return;
+        await api(`tires/${id}`, { method: 'DELETE' });
+        tires = tires.filter((t) => t.id !== id);
+        renderTires();
+        $<HTMLDialogElement>('#tireDlg').close();
+        toast('Silindi');
+      }));
+    });
+
+    // CSV (Excel'in Türkçe ayarı ";" kullanır, ikisini de kabul ediyoruz)
+    function toCsv(rows: (string | number | null)[][]) {
+      return '﻿' + rows.map((r) => r.map((v) => { const s = String(v ?? ''); return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }).join(';')).join('\r\n');
+    }
+    function download(name: string, text: string) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    function parseCsv(text: string): string[][] {
+      text = text.replace(/^﻿/, '');
+      const first = text.split(/\r?\n/)[0] || '';
+      const sep = (first.match(/;/g) || []).length >= (first.match(/,/g) || []).length ? ';' : ',';
+      const rows: string[][] = [];
+      let row: string[] = [], cell = '', inQ = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQ) {
+          if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+          else if (c === '"') inQ = false;
+          else cell += c;
+        } else if (c === '"') inQ = true;
+        else if (c === sep) { row.push(cell); cell = ''; }
+        else if (c === '\n' || c === '\r') {
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          row.push(cell); rows.push(row); row = []; cell = '';
+        } else cell += c;
+      }
+      if (cell || row.length) { row.push(cell); rows.push(row); }
+      return rows.filter((r) => r.some((c) => c.trim()));
+    }
+    const HEAD = ['Marka', 'Model', 'Ölçü', 'Yük/Hız', 'Mevsim', 'Tür', 'DOT', 'Adet', 'Uyarı sınırı', 'Fiyat', 'Not'];
+    const back = (map: Record<string, string>, v: string, def: string) => {
+      const l = lower(v.trim());
+      return Object.keys(map).find((k) => lower(map[k]) === l || k === l) || (l.startsWith('4') ? '4mevsim' : l.startsWith('k') ? 'kis' : def);
+    };
+    $('#exportBtn').addEventListener('click', () => {
+      download(`stok-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([HEAD, ...tires.map((t) => [t.brand, t.model, t.size, t.load_speed, SEASON[t.season], CAT[t.category], t.dot_year, t.quantity, t.min_qty, t.price, t.note])]));
+    });
+    $('#importBtn').addEventListener('click', () => {
+      ask('Excel dosyanızı "CSV (noktalı virgülle ayrılmış)" olarak kaydedin. Sütun sırası:\n\n' + HEAD.join(' · ') + '\n\nİlk satır başlık olabilir. Örnek dosya için önce "Stoğu indir"e basabilirsiniz.', [['iptal', 'Vazgeç'], ['ok', 'Dosya seç', 'primary']]).then((a) => { if (a === 'ok') $<HTMLInputElement>('#importFile').click(); });
+    });
+    $('#importFile').addEventListener('change', async (e) => {
+      const input = e.target as HTMLInputElement;
+      const file = input.files?.[0];
+      input.value = '';
+      if (!file) return;
+      let rows = parseCsv(await file.text());
+      if (rows[0] && lower(rows[0][0] || '').startsWith('marka')) rows = rows.slice(1);
+      const items = rows.map((r) => ({
+        brand: r[0], model: r[1], size: r[2], load_speed: r[3],
+        season: back(SEASON, r[4] || '', 'yaz'), category: back(CAT, r[5] || '', 'binek'),
+        dot_year: r[6], quantity: r[7] || 0, min_qty: r[8] || 4, price: r[9], note: r[10],
+      }));
+      if (!items.length) return toast('Dosyada satır bulunamadı', true);
+      if ((await ask(`${items.length} lastik eklenecek. Devam edilsin mi?`, [['iptal', 'Vazgeç'], ['ok', 'Ekle', 'primary']])) !== 'ok') return;
+      run(api('tires/import', { method: 'POST', body: { rows: items } }).then((r: any) => { toast(`${r.added} lastik eklendi`); return loadTires(); }));
+    });
+
+    // ---------- Lastik oteli ----------
+    function renderHotel() {
+      const q = lower($<HTMLInputElement>('#hq').value.trim());
+      const qd = q.replace(/\D/g, '');
+      const list = hotel.filter((h) => {
+        if (hotelState === 'in' && h.check_out) return false;
+        if (hotelState === 'out' && !h.check_out) return false;
+        if (!q) return true;
+        const text = lower(`${h.name} ${h.plate} ${h.plate.replace(/\s/g, '')} ${h.vehicle} ${h.brand} ${h.size} ${h.shelf}`);
+        return text.includes(q) || (qd.length >= 3 && h.phone.includes(qd));
+      });
+      const open = hotel.filter((h) => !h.check_out);
+      $('#hIn').textContent = String(open.length);
+      $('#hTires').textContent = String(open.reduce((a, h) => a + h.count, 0));
+      $('#hCust').textContent = String(new Set(hotel.map((h) => h.customer_id)).size);
+      $('#hotelList').innerHTML = list.length
+        ? list.map((h) => {
+            const wa = '9' + h.phone;
+            return `<div class="row">
+              <button class="row-main" data-hedit="${h.id}" aria-label="Düzenle">
+                <div class="size">${esc(h.plate || 'Plakasız')} · ${esc(h.name)}</div>
+                <div class="sub">${h.count} adet ${esc(h.brand)} ${esc(h.size)}${h.with_rim ? ' · jantlı' : ''}${h.shelf ? ' · Raf ' + esc(h.shelf) : ''}</div>
+                <div class="badges"><span class="badge">${SEASON[h.season] || ''}</span><span class="badge">Giriş ${trDate(h.check_in)}</span>${h.check_out ? `<span class="badge ok">Teslim ${trDate(h.check_out)}</span>` : ''}${h.tread_mm != null ? `<span class="badge">${String(h.tread_mm).replace('.', ',')} mm</span>` : ''}${h.kvkk_ok ? '' : '<span class="badge warn">KVKK onayı yok</span>'}</div>
+              </button>
+              <div class="actions">
+                <a class="btn small" href="tel:${esc(h.phone)}">Ara</a>
+                <a class="btn small" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a>
+                ${h.check_out ? `<button class="btn small" data-reopen="${h.id}">Depoya geri al</button>` : `<button class="btn small primary" data-out="${h.id}">Teslim et</button>`}
+              </div>
+            </div>`;
+          }).join('')
+        : `<div class="empty">${hotel.length ? 'Kayıt bulunamadı.' : 'Henüz otel kaydı yok. “+ Yeni kayıt” ile ekleyin.'}</div>`;
+    }
+    async function loadHotel() {
+      hotel = await api<Hotel[]>('hotel');
+      refreshBrands();
+      renderHotel();
+    }
+    function upsertHotel(h: Hotel) {
+      const i = hotel.findIndex((x) => x.id === h.id);
+      if (i >= 0) hotel[i] = h; else hotel.unshift(h);
+      // Aynı telefonlu diğer kayıtlarda adı güncelle
+      hotel.forEach((x) => { if (x.customer_id === h.customer_id) { x.name = h.name; x.kvkk_ok = h.kvkk_ok; } });
+    }
+    chipGroup('#hotelChips', (v) => { hotelState = v; renderHotel(); });
+    $('#hq').addEventListener('input', renderHotel);
+
+    let hEditing: Hotel | undefined;
+    const hotelForm = $<HTMLFormElement>('#hotelForm');
+    function openHotel(h?: Hotel) {
+      hEditing = h;
+      $('#hotelTitle').textContent = h ? 'Kaydı düzenle' : 'Lastik oteli kaydı';
+      fillForm(hotelForm, h || { season: 'kis', count: 4, check_in: new Date().toISOString().slice(0, 10) });
+      $('#hotelDel').hidden = !h;
+      $<HTMLDialogElement>('#hotelDlg').showModal();
+    }
+    $('#addHotel').addEventListener('click', () => openHotel());
+    // Telefon girilince kayıtlı müşterinin adını otomatik doldur
+    hotelForm.elements.namedItem('phone')!.addEventListener('change', (e) => {
+      const d = (e.target as HTMLInputElement).value.replace(/\D/g, '').replace(/^90(?=\d{10}$)/, '').replace(/^(?=5\d{9}$)/, '0');
+      const prev = hotel.find((h) => h.phone === d);
+      const name = hotelForm.elements.namedItem('name') as HTMLInputElement;
+      if (prev && !name.value) { name.value = prev.name; toast('Kayıtlı müşteri: ' + prev.name); }
+    });
+    hotelForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = formData(hotelForm);
+      run((async () => {
+        const h = hEditing ? await api<Hotel>(`hotel/${hEditing.id}`, { method: 'PUT', body: data }) : await api<Hotel>('hotel', { method: 'POST', body: data });
+        upsertHotel(h);
+        renderHotel();
+        $<HTMLDialogElement>('#hotelDlg').close();
+        toast('Kaydedildi');
+      })());
+    });
+    $('#hotelDel').addEventListener('click', () => {
+      if (!hEditing) return;
+      const h = hEditing;
+      const others = hotel.filter((x) => x.customer_id === h.customer_id && x.id !== h.id).length;
+      run((async () => {
+        const a = await ask(`Ne silinsin?\n\n“Müşteriyi tamamen sil” adı, telefonu ve ${others ? `diğer ${others} kaydı da` : 'tüm kayıtları'} kalıcı olarak siler (KVKK silme talebi için).`, [['iptal', 'Vazgeç'], ['one', 'Sadece bu kaydı sil', 'danger'], ['all', 'Müşteriyi tamamen sil', 'danger']]);
+        if (a === 'iptal') return;
+        const all = a === 'all';
+        if (all) {
+          await api(`customers/${h.customer_id}`, { method: 'DELETE' });
+          hotel = hotel.filter((x) => x.customer_id !== h.customer_id);
+        } else {
+          await api(`hotel/${h.id}`, { method: 'DELETE' });
+          hotel = hotel.filter((x) => x.id !== h.id);
+        }
+        renderHotel();
+        $<HTMLDialogElement>('#hotelDlg').close();
+        toast('Silindi');
+      })());
+    });
+    $('#hotelList').addEventListener('click', (e) => {
+      const el = e.target as HTMLElement;
+      const out = el.closest<HTMLElement>('[data-out]');
+      if (out) {
+        const h = hotel.find((x) => x.id === Number(out.dataset.out))!;
+        return run(ask(`${h.plate || h.name}: ${h.count} lastik müşteriye teslim edildi olarak işaretlensin mi?`, [['iptal', 'Vazgeç'], ['ok', 'Teslim et', 'primary']]).then(async (a) => {
+          if (a !== 'ok') return;
+          const r = await api<Hotel>(`hotel/${h.id}/checkout`, { method: 'POST', body: {} });
+          upsertHotel(r); renderHotel(); toast('Teslim edildi');
+        }));
+      }
+      const re = el.closest<HTMLElement>('[data-reopen]');
+      if (re) return run(api<Hotel>(`hotel/${re.dataset.reopen}/reopen`, { method: 'POST', body: {} }).then((r) => { upsertHotel(r); renderHotel(); }));
+      const ed = el.closest<HTMLElement>('[data-hedit]');
+      if (ed) openHotel(hotel.find((x) => x.id === Number(ed.dataset.hedit)));
+    });
+    $('#hotelExport').addEventListener('click', () => {
+      download(`lastik-oteli-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([
+        ['Ad soyad', 'Telefon', 'Plaka', 'Araç', 'Marka', 'Ölçü', 'Mevsim', 'Adet', 'Jantlı', 'Diş (mm)', 'Raf', 'Ücret', 'Giriş', 'Teslim', 'Not'],
+        ...hotel.map((h) => [h.name, h.phone, h.plate, h.vehicle, h.brand, h.size, SEASON[h.season], h.count, h.with_rim ? 'Evet' : 'Hayır', h.tread_mm, h.shelf, h.fee, h.check_in, h.check_out, h.note]),
+      ]));
+    });
+
+    // ---------- Hareketler ----------
+    async function loadMoves() {
+      const moves = await api<Move[]>('moves');
+      $('#moveList').innerHTML = moves.length
+        ? moves.map((m) => `<div class="row"><div><div class="size">${esc(m.size)} · ${esc(m.brand)} ${esc(m.model)}</div><div class="sub">${trDateTime(m.created_at)} · ${REASON[m.reason] || esc(m.reason)}${m.note ? ' · ' + esc(m.note) : ''}${m.user_email ? ' · ' + esc(m.user_email.split('@')[0]) : ''}</div></div><b class="${m.delta > 0 ? 'plus' : 'minus'}" style="font-size:1.25rem">${m.delta > 0 ? '+' : ''}${m.delta}</b></div>`).join('')
+        : '<div class="empty">Henüz hareket yok.</div>';
+    }
+
+    // Tarayıcının confirm/alert kutuları yerine sayfa içi onay penceresi
+    function ask(msg: string, buttons: [string, string, string?][]): Promise<string> {
+      const dlg = $<HTMLDialogElement>('#askDlg');
+      $('#askMsg').textContent = msg;
+      const foot = $('#askFoot');
+      foot.innerHTML = buttons.map(([v, label, cls]) => `<button type="button" class="btn ${cls || ''}" data-v="${v}">${esc(label)}</button>`).join('');
+      return new Promise((resolve) => {
+        const done = (v: string) => { dlg.close(); resolve(v); };
+        foot.onclick = (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('[data-v]'); if (b) done(b.dataset.v!); };
+        dlg.oncancel = () => resolve(buttons[0][0]);
+        dlg.showModal();
+      });
+    }
+
+    document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => (b.closest('dialog') as HTMLDialogElement).close()));
+
+    // ---------- Başlat ----------
+    run((async () => {
+      const me = await api<{ email: string }>('me');
+      $('#who').textContent = me.email;
+      await Promise.all([loadTires(), loadHotel()]);
+      let tab = 'stok';
+      try { tab = sessionStorage.getItem('panelTab') || 'stok'; } catch {}
+      showTab(tab);
+    })());
+  </script>
+</body>
+</html>
