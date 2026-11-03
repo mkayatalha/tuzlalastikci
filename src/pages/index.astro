@@ -14,7 +14,7 @@ const faqSchema = {
 ---
 <Base
   title="Tuzla Lastikçi | Tersane Lastik · Lastik, Jant ve Yol Yardım"
-  description="Tersane Lastik: Tuzla'da lastik satış ve değişim, yetkili Hankook bayi, lastik oteli, jant kumlama, boyama ve jant düzeltme. Tersane bölgesine yakın, her gün 23:30'a kadar açık. 0216 446 15 60"
+  description="Tersane Lastik: Tuzla'da lastik satış ve değişim, yetkili Hankook bayi, lastik oteli, jant kumlama, boyama ve jant düzeltme. Tersane bölgesine yakın, Pzt–Cmt 23:30'a kadar açık. 0216 446 15 60"
   schema={[faqSchema]}
 >
   <section class="hero">
@@ -28,7 +28,7 @@ const faqSchema = {
         <OpenStatus />
       </div>
       <aside class="hero-card" aria-label="İletişim bilgileri">
-        <p class="rating">Google'da 2.000'den fazla müşteri yorumu</p>
+        <p class="rating">Google'da 4 yıldız · 104 müşteri yorumu</p>
         <dl>
           <dt>Adres</dt><dd>{business.street}, {business.postalCode} {business.district} / {business.city}</dd>
           {business.hours.map((h) => (<><dt>{h.days}</dt><dd>{h.open} – {h.close}</dd></>))}
