@@ -97,6 +97,12 @@ const { demo = false } = Astro.props;
     .toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; z-index: 20; max-width: calc(100vw - 32px) }
     .toast.err { background: var(--warn); color: #fff }
     .proto { background: var(--warn-bg); color: var(--ink); font-size: .8125rem; padding: 8px 16px; text-align: center }
+    .login { min-height: 100dvh; display: grid; place-items: center; padding: 16px }
+    .login-card { width: min(360px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 14px }
+    .login-card h1 { margin: 0; font-size: 1.5rem }
+    .login-card p:empty { display: none }
+    .login-card .fld input { font-size: 1.125rem }
+    .logout { background: none; border: 1px solid rgb(255 255 255 / .35); color: inherit; border-radius: 8px; padding: 4px 10px; font-size: .8125rem; cursor: pointer }
     .note { font-size: .8125rem; color: var(--muted) }
     @media (max-width: 420px) { .grid2 { grid-template-columns: 1fr } .stats .stat b { font-size: 1.125rem } }
   </style>
@@ -104,10 +110,24 @@ const { demo = false } = Astro.props;
 <body>
   {demo && <div class="proto">Demo · örnek verilerle çalışır, sayfa yenilenince başa döner. Gerçek panelde veriler kalıcıdır ve giriş gerekir.</div>}
   {demo && <script is:inline src="/panel-demo/mock.js"></script>}
+  <section class="login" id="login" hidden>
+    <form class="login-card" id="loginForm">
+      <h1>Tersane Lastik</h1>
+      <p class="note">Stok ve lastik oteli paneli</p>
+      <input type="text" name="username" autocomplete="username" value="panel" hidden />
+      <label class="fld"><span>Şifre</span><input id="pw" type="password" autocomplete="current-password" required /></label>
+      <button class="btn primary" type="submit">Giriş yap</button>
+      <p class="note" id="loginErr" style="color:var(--warn)" role="alert"></p>
+      <p class="note">Bir kez giriş yaptığınızda bu cihaz 6 ay boyunca hatırlanır.</p>
+    </form>
+  </section>
+
+  <div id="app" hidden>
   <header class="top">
     <div class="top-in">
       <span class="brand">Tersane Lastik · Panel</span>
       <span class="who" id="who"></span>
+      {!demo && <button class="logout" id="logout" type="button">Çıkış</button>}
       <nav class="tabs" role="tablist">
         <button class="tab" role="tab" data-tab="stok" aria-selected="true">Stok</button>
         <button class="tab" role="tab" data-tab="otel" aria-selected="false">Lastik oteli</button>
@@ -179,6 +199,7 @@ const { demo = false } = Astro.props;
       <div class="list" id="moveList"></div>
     </section>
   </main>
+  </div>
 
   <!-- Lastik formu -->
   <dialog id="tireDlg">
@@ -286,7 +307,7 @@ const { demo = false } = Astro.props;
       let data: any = null;
       try { data = await res.json(); } catch {}
       if (!res.ok) {
-        if (res.status === 401) { location.reload(); }
+        if (res.status === 401 && path !== 'login') { showLogin(); }
         throw new Error(data?.error || 'Bağlantı hatası');
       }
       return data;
@@ -652,7 +673,7 @@ const { demo = false } = Astro.props;
     async function loadMoves() {
       const moves = await api<Move[]>('moves');
       $('#moveList').innerHTML = moves.length
-        ? moves.map((m) => `<div class="row"><div><div class="size">${esc(m.size)} · ${esc(m.brand)} ${esc(m.model)}</div><div class="sub">${trDateTime(m.created_at)} · ${REASON[m.reason] || esc(m.reason)}${m.note ? ' · ' + esc(m.note) : ''}${m.user_email ? ' · ' + esc(m.user_email.split('@')[0]) : ''}</div></div><b class="${m.delta > 0 ? 'plus' : 'minus'}" style="font-size:1.25rem">${m.delta > 0 ? '+' : ''}${m.delta}</b></div>`).join('')
+        ? moves.map((m) => `<div class="row"><div><div class="size">${esc(m.size)} · ${esc(m.brand)} ${esc(m.model)}</div><div class="sub">${trDateTime(m.created_at)} · ${REASON[m.reason] || esc(m.reason)}${m.note ? ' · ' + esc(m.note) : ''}${m.user_email ? ' · ' + esc(m.user_email) : ''}</div></div><b class="${m.delta > 0 ? 'plus' : 'minus'}" style="font-size:1.25rem">${m.delta > 0 ? '+' : ''}${m.delta}</b></div>`).join('')
         : '<div class="empty">Henüz hareket yok.</div>';
     }
 
@@ -672,15 +693,39 @@ const { demo = false } = Astro.props;
 
     document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => (b.closest('dialog') as HTMLDialogElement).close()));
 
+    // ---------- Giriş ----------
+    function showLogin() {
+      $('#app').hidden = true;
+      $('#login').hidden = false;
+      $<HTMLInputElement>('#pw').focus();
+    }
+    $('#loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const pw = $<HTMLInputElement>('#pw');
+      run(api('login', { method: 'POST', body: { password: pw.value } }).then(() => { pw.value = ''; return start(); }));
+    });
+    document.getElementById('logout')?.addEventListener('click', () => {
+      run(api('logout', { method: 'POST', body: {} }).then(() => showLogin()));
+    });
+
     // ---------- Başlat ----------
-    run((async () => {
-      const me = await api<{ email: string }>('me');
-      $('#who').textContent = me.email;
+    let started = false;
+    async function start() {
+      const me = await api<{ user: string }>('me');
+      $('#who').textContent = me.user;
+      $('#login').hidden = true;
+      $('#app').hidden = false;
       await Promise.all([loadTires(), loadHotel()]);
+      if (started) return;
+      started = true;
       let tab = 'stok';
       try { tab = sessionStorage.getItem('panelTab') || 'stok'; } catch {}
       showTab(tab);
-    })());
+    }
+    start().catch((e) => {
+      showLogin();
+      if (e.message !== 'Giriş yapılmamış.') $('#loginErr').textContent = e.message;
+    });
   </script>
 </body>
 </html>

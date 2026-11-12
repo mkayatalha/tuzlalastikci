@@ -22,7 +22,7 @@
     T('Continental', 'EcoContact 6', '195/65 R15', '91H', 'yaz', 'binek', 1, 2, 3700, 2024),
   ];
   const moves = [];
-  const M = (t, delta, reason, note, d) => moves.push({ id: ++mid, tire_id: t.id, delta, reason, note: note || '', user_email: 'dukkan@ornek.com', created_at: new Date(Date.now() - d * 36e5).toISOString().replace('T', ' ').slice(0, 19) });
+  const M = (t, delta, reason, note, d) => moves.push({ id: ++mid, tire_id: t.id, delta, reason, note: note || '', user_email: 'usta', created_at: new Date(Date.now() - d * 36e5).toISOString().replace('T', ' ').slice(0, 19) });
   tires.forEach((t, i) => M(t, t.quantity + (i % 3), 'alis', 'Açılış sayımı', 200 - i));
   [[0, -4, 'satis', '34 KL 0001 Doblo', 30], [3, -2, 'satis', '', 26], [11, -4, 'satis', 'Filo müşterisi', 20], [8, -2, 'satis', '', 9], [14, -1, 'satis', '', 5], [2, -1, 'satis', '', 2]].forEach(([i, d, r, n, h]) => M(tires[i], d, r, n, h));
   const customers = [];
@@ -59,7 +59,7 @@
   function route(method, path, b) {
     const [res, idRaw, action] = path.split('/');
     const id = Number(idRaw) || null;
-    if (res === 'me') return { email: 'demo@tuzlalastikci.com' };
+    if (res === 'me') return { user: 'demo' };
     if (res === 'tires') {
       if (!idRaw && method === 'GET') return tires.slice().sort((a, b) => a.brand.localeCompare(b.brand, 'tr') || a.size.localeCompare(b.size));
       if (!idRaw && method === 'POST') { const t = Object.assign({ id: ++tid, created_at: now(), updated_at: now() }, tireFields(b)); tires.push(t); if (t.quantity) M(t, t.quantity, 'ilk_kayit', '', 0); return t; }
