@@ -14,7 +14,7 @@ const faqSchema = {
 ---
 <Base
   title="Tuzla Lastikçi | Tersane Lastik · Lastik, Jant ve Yol Yardım"
-  description="Tersane Lastik: Tuzla'da lastik satış ve değişim, yetkili Hankook bayi, lastik oteli, jant kumlama, boyama ve jant düzeltme. Tersane bölgesine yakın, Pzt–Cmt 23:30'a kadar açık. 0216 446 15 60"
+  description="Tersane Lastik: Tuzla'da lastik satış ve değişim, yetkili Hankook bayi, lastik oteli, jant kumlama, boyama ve jant düzeltme. akü, tersane bölgesine yakın, her gün 23:30'a kadar açık. 0216 446 15 60"
   schema={[faqSchema]}
 >
   <section class="hero">
@@ -23,12 +23,13 @@ const faqSchema = {
         <p class="label eyebrow">Tuzla · Evliya Çelebi · Tersane bölgesi</p>
         <p class="brandline">{business.name}</p>
         <h1>{business.headline}<span>Lastik, jant ve yol yardımı tek adreste</span></h1>
-        <p class="lead">Binek, ticari ve ağır vasıta lastiği; jant kumlama, boyama ve CNC jant düzeltme. Yetkili Hankook bayisi, lastik oteli ve yerinde yol yardım. Pazar hariç her gün gece 23:30'a kadar açığız.</p>
+        <p class="lead">Binek, ticari ve ağır vasıta lastiği; jant kumlama, boyama ve CNC jant düzeltme. Yetkili Hankook bayisi, akü, lastik oteli ve yerinde yol yardım. Pazar dahil her gün gece 23:30'a kadar açığız.</p>
         <CallButtons variant="hero" />
         <OpenStatus />
       </div>
       <aside class="hero-card" aria-label="İletişim bilgileri">
-        <p class="rating">Google'da 4 yıldız · 104 müşteri yorumu</p>
+        <p class="rating">Google'da {business.rating} puan · {business.reviewCount} müşteri yorumu</p>
+        <p class="review-link"><a href={business.reviewUrl} data-track="review" rel="noopener" target="_blank">Google'da yorum yap ★</a></p>
         <dl>
           <dt>Adres</dt><dd>{business.street}, {business.postalCode} {business.district} / {business.city}</dd>
           {business.hours.map((h) => (<><dt>{h.days}</dt><dd>{h.open} – {h.close}</dd></>))}

@@ -47,6 +47,7 @@ export const SCHEMA = [
     with_rim INTEGER NOT NULL DEFAULT 0,
     tread_mm REAL,
     shelf TEXT NOT NULL DEFAULT '',
+    depot TEXT NOT NULL DEFAULT '',
     fee REAL,
     note TEXT NOT NULL DEFAULT '',
     check_in TEXT NOT NULL DEFAULT (date('now')),
@@ -61,9 +62,24 @@ export const SCHEMA = [
   )`,
 ];
 
+// Var olan tabloya sonradan eklenen sütunlar. Eski kayıtlar silinmez,
+// yeni sütun boş ('') değerle eklenir.
+const COLUMNS = [['hotel', 'depot', `TEXT NOT NULL DEFAULT ''`]];
+
 let ready = false;
 export async function ensureSchema(db) {
   if (ready) return;
   await db.batch(SCHEMA.map((s) => db.prepare(s)));
+  for (const [table, col, def] of COLUMNS) {
+    const { results } = await db.prepare(`PRAGMA table_info(${table})`).all();
+    if (!results.some((r) => r.name === col)) {
+      try {
+        await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`).run();
+      } catch (e) {
+        // Aynı anda gelen başka bir istek sütunu eklemiş olabilir.
+        if (!/duplicate column/i.test(String(e?.message))) throw e;
+      }
+    }
+  }
   ready = true;
 }

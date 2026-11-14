@@ -16,9 +16,13 @@ export const business = {
   geo: { lat: 40.841009, lng: 29.294133 },
   mapsUrl: 'https://maps.app.goo.gl/uKEFstR3DtiKtoUz9',
   instagram: 'https://www.instagram.com/tersane_lastik/',
+  // Google İşletme Profili yorum bağlantısı ve puanı (Google'daki sayıyla elle güncel tutun)
+  reviewUrl: 'https://g.page/r/CW6dlsp76Mt_EBM/review',
+  rating: '4,0',
+  reviewCount: 106,
   hours: [
     { days: 'Pazartesi – Cumartesi', open: '08:00', close: '23:30', schemaDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] },
-    { days: 'Pazar', open: '11:00', close: '18:00', schemaDays: ['Sunday'] },
+    { days: 'Pazar', open: '12:00', close: '23:30', schemaDays: ['Sunday'] },
   ],
 };
 
@@ -39,25 +43,28 @@ export type Service = {
   body: string[];
   bullets: string[];
   faq: { q: string; a: string }[];
+  // Doluysa sayfada "Konumunu WhatsApp'tan gönder" butonu çıkar (hazır mesaj)
+  whatsappText?: string;
 };
 
 export const services: Service[] = [
   {
     slug: 'lastik-degisimi',
     title: 'Lastik satış ve değişim',
-    short: 'Yaz, kış ve 4 mevsim lastik. Sökme, takma, balans ve sibop değişimi aynı gün.',
+    short: 'Yaz, kış ve 4 mevsim lastik. Sökme, takma, balans, rotasyon ve sibop değişimi aynı gün.',
     h1: 'Tuzla Lastik Satış ve Değişim',
     metaTitle: 'Tuzla Lastik Değişimi ve Satışı | Tersane Lastik',
-    metaDescription: 'Tuzla\'da yaz, kış ve 4 mevsim lastik satışı, değişimi ve balans. Randevusuz gelin, 23:30\'a kadar açığız. 0216 446 15 60',
+    metaDescription: 'Tuzla\'da yaz, kış ve 4 mevsim lastik satışı, değişimi, balans ve lastik rotasyonu. Randevusuz gelin, her gün 23:30\'a kadar açığız. 0216 446 15 60',
     icon: 'tire',
     body: [
       'Binek araç, SUV, hafif ticari ve motosiklet lastiklerinde satış ve değişim yapıyoruz. Lastik ölçünüzü telefonda söylemeniz yeterli; stok ve fiyat bilgisini hemen veriyoruz.',
-      'Değişimde eski lastiği söküyor, yeni lastiği takıyor, balans ayarını yapıyor ve gerekirse sibobu yeniliyoruz. Dört lastik için işlem genelde 30–45 dakika sürer.',
+      'Değişimde eski lastiği söküyor, yeni lastiği takıyor, balans ayarını yapıyor ve gerekirse sibobu yeniliyoruz. Lastiklerin eşit aşınması için ön ve arka lastiklerin yerini değiştiren lastik rotasyonunu da yapıyoruz. Dört lastik için işlem genelde 30–45 dakika sürer.',
       'Mevsim geçişlerinde (kasım ve nisan) yoğunluk olur. Bu dönemlerde önceden arayıp uygun saati sormanızı öneririz.',
     ],
-    bullets: ['Yaz, kış ve 4 mevsim lastik', 'Balans ve sibop değişimi', 'Patlak lastik tamiri', 'Motosiklet lastiği'],
+    bullets: ['Yaz, kış ve 4 mevsim lastik', 'Balans ve sibop değişimi', 'Lastik rotasyonu', 'Patlak lastik tamiri ve yama', 'Motosiklet lastiği'],
     faq: [
       { q: 'Randevu almam gerekiyor mu?', a: 'Hayır, randevusuz gelebilirsiniz. Mevsim geçişlerinde önceden aramanız beklemeyi azaltır.' },
+      { q: 'Lastik rotasyonu nedir, ne zaman yapılmalı?', a: 'Ön ve arka lastiklerin yerini değiştirerek dört lastiğin eşit aşınmasını sağlamaktır. Genelde 10.000 km\'de bir veya mevsim değişiminde yapılması önerilir.' },
       { q: 'Kış lastiğine ne zaman geçmeliyim?', a: 'Hava sıcaklığı düzenli olarak 7 °C\'nin altına indiğinde, İstanbul\'da genellikle kasım ayında.' },
     ],
   },
@@ -120,16 +127,39 @@ export const services: Service[] = [
     title: 'Yol yardım ve yerinde değişim',
     short: 'Lastiğiniz yolda patladıysa arayın; Tuzla ve çevresinde yerinize gelelim.',
     h1: 'Tuzla Lastik Yol Yardım',
-    metaTitle: 'Tuzla Lastik Yol Yardım ve Yerinde Değişim | Tersane Lastik',
-    metaDescription: 'Tuzla\'da lastiğiniz patladıysa arayın: yol yardım ve yerinde lastik değişimi. Tuzla, Aydınlı, Orhanlı, İçmeler. 0216 446 15 60',
+    metaTitle: 'Tuzla Lastik Yol Yardım · Her Gün 23:30\'a Kadar | Tersane Lastik',
+    metaDescription: 'Tuzla\'da lastiğiniz patladıysa veya aküniz bittiyse arayın: yerinde lastik tamiri, değişim ve akü takma. Tuzla, Orhanlı, Aydınlı, İçmeler. 0216 446 15 60',
     icon: 'truck',
     body: [
       'Lastiğiniz yolda patladıysa veya stepneniz yoksa bizi arayın. Konumunuzu söyleyin, Tuzla ve yakın çevresinde yerinize gelip lastiği tamir ediyor ya da değiştiriyoruz.',
-      'Güvenliğiniz için aracı mümkünse emniyet şeridine çekin, dörtlüleri yakın ve reflektörü koyun. Konumunuzu telefonla paylaşmanız ekibin sizi daha hızlı bulmasını sağlar.',
+      'Güvenliğiniz için aracı mümkünse emniyet şeridine çekin, dörtlüleri yakın ve reflektörü koyun. Konumunuzu WhatsApp\'tan paylaşmanız ekibin sizi daha hızlı bulmasını sağlar.',
+      'Aküsü biten araçlara da yerinde akü takıyoruz. Orhanlı, Aydınlı ve Tuzla tersaneler bölgesi dükkanımıza yakın olduğu için bu bölgelere hızlı ulaşıyoruz.',
     ],
-    bullets: ['Yerinde patlak tamiri', 'Yerinde lastik değişimi', 'Stepne takma', 'Tuzla ve yakın çevresi'],
+    bullets: ['Yerinde patlak tamiri', 'Yerinde lastik değişimi', 'Stepne takma', 'Yerinde akü değişimi', 'Tuzla, Orhanlı, Aydınlı ve İçmeler'],
     faq: [
-      { q: 'Yol yardım için ne yapmam gerekiyor?', a: 'Telefonla arayın, konumunuzu ve aracınızın lastik ölçüsünü söyleyin.' },
+      { q: 'Yol yardım için ne yapmam gerekiyor?', a: 'Telefonla arayın veya WhatsApp\'tan konumunuzu gönderin. Aracınızın lastik ölçüsünü de söylerseniz doğru lastikle geliriz.' },
+      { q: 'Yol yardım hangi saatlerde var?', a: 'Her gün dükkanımızın açık olduğu saatlerde: Pazartesi–Cumartesi 08:00–23:30, Pazar 12:00–23:30.' },
+      { q: 'Aküm bitti, yerinde akü takıyor musunuz?', a: 'Evet. Aracınıza uygun aküyü getirip yerinde takıyoruz. Aracın marka ve modelini söylemeniz yeterli.' },
+    ],
+    whatsappText: 'Merhaba, yol yardım istiyorum. Konumumu gönderiyorum:',
+  },
+  {
+    slug: 'aku',
+    title: 'Akü satış ve değişimi',
+    short: 'Mutlu, İnci, Bosch ve diğer marka aküler. Dükkanda veya yerinde takıyoruz.',
+    h1: 'Tuzla Akü Satış ve Akü Değişimi',
+    metaTitle: 'Tuzla Akü Satış ve Yerinde Akü Değişimi | Tersane Lastik',
+    metaDescription: 'Tuzla\'da akü satışı ve değişimi: Mutlu, İnci, Bosch ve diğer markalar. Aküniz bittiyse arayın, yerinde takalım. Her gün 23:30\'a kadar. 0216 446 15 60',
+    icon: 'battery',
+    body: [
+      'Binek araç, hafif ticari ve ticari araçlar için akü satıyor ve takıyoruz. Çoğunlukla Mutlu, İnci ve Bosch akü kullanıyoruz; diğer markaları da bulabilirsiniz.',
+      'Aracınız çalışmıyorsa veya marş zor basıyorsa aküyü kontrol ediyor, gerekiyorsa aracınıza uygun amper ve ölçüdeki yeni aküyü aynı gün takıyoruz.',
+      'Aküsü biten ve yerinden hareket edemeyen araçlar için Tuzla ve yakın çevresinde yerinde akü değişimi yapıyoruz. Aracın marka, model ve yılını söylemeniz yeterli.',
+    ],
+    bullets: ['Mutlu, İnci, Bosch ve diğer markalar', 'Akü kontrolü', 'Dükkanda veya yerinde akü takma', 'Binek ve ticari araç aküsü'],
+    faq: [
+      { q: 'Akü fiyatını nasıl öğrenirim?', a: 'Aracınızın marka, model ve yılını veya mevcut akünün üzerindeki amper değerini söyleyin, uygun aküyü ve fiyatını hemen verelim.' },
+      { q: 'Akü yerinde takılıyor mu?', a: 'Evet. Aküsü biten aracınızın yanına gelip yeni aküyü yerinde takıyoruz.' },
     ],
   },
   {
@@ -177,6 +207,7 @@ export type Area = {
   intro: string;
   body: string[];
   focus: string[]; // services slugs most relevant here
+  faq?: { q: string; a: string }[];
 };
 
 // Her bölge sayfasının metni farklı olmalı; kopyala-yapıştır sayfalar Google'da değer kaybeder.
@@ -189,7 +220,7 @@ export const areas: Area[] = [
     metaDescription: 'Tuzla tersaneler bölgesine yakın lastikçi. Servis araçları, kamyonet ve binek araçlar için lastik, jant ve yol yardım. 0216 446 15 60',
     intro: 'Tersaneler bölgesinde çalışan servis şoförleri, firma araçları ve vardiya çıkışı lastiğini yaptırmak isteyenler için yakın adresiz.',
     body: [
-      'Tersane vardiyaları akşam geç bittiği için hafta içi 23:30\'a kadar açığız. İş çıkışı aracınızı getirip lastiğinizi değiştirebilirsiniz.',
+      'Tersane vardiyaları akşam geç bittiği için pazar dahil her gün 23:30\'a kadar açığız. İş çıkışı aracınızı getirip lastiğinizi değiştirebilirsiniz.',
       'Bölgede yoğun çalışan servis minibüsleri ve kamyonetlerin lastiklerini de yapıyoruz. Firma araçları için faturalı çalışıyoruz.',
     ],
     focus: ['ticari-arac-lastik', 'lastik-degisimi', 'yol-yardim'],
@@ -198,37 +229,51 @@ export const areas: Area[] = [
     slug: 'aydinli',
     name: 'Aydınlı',
     h1: 'Aydınlı Lastikçi',
-    metaTitle: 'Aydınlı Lastikçi | Tersane Lastik',
-    metaDescription: 'Aydınlı\'ya yakın lastikçi: lastik değişimi, jant kumlama, jant düzeltme ve yol yardım. 23:30\'a kadar açık. 0216 446 15 60',
-    intro: 'Aydınlı ve çevresindeki sanayi bölgelerinden gelen müşterilerimiz için lastik, jant ve yol yardım hizmeti veriyoruz.',
+    metaTitle: 'Aydınlı Lastikçi · Lastik, Jant, Akü ve Yol Yardım | Tersane Lastik',
+    metaDescription: 'Aydınlı\'ya yakın lastikçi: lastik satış ve değişim, Hankook bayi, jant düzeltme, akü ve yerinde yol yardım. Her gün 23:30\'a kadar açık. 0216 446 15 60',
+    intro: 'Aydınlı ve çevresindeki sanayi bölgelerinden gelen müşterilerimiz için lastik, jant, akü ve yol yardım hizmeti veriyoruz.',
     body: [
-      'Aydınlı\'dan dükkanımıza araçla kısa sürede ulaşabilirsiniz. Yol tarifi için sayfanın altındaki harita bağlantısını kullanın.',
-      'Aydınlı çevresinde lastiğiniz patladıysa arayın; konumunuza gelip yerinde tamir veya değişim yapalım.',
+      'Aydınlı\'dan Evliya Çelebi Mahallesi\'ndeki dükkanımıza araçla kısa sürede ulaşabilirsiniz. Yol tarifi için sayfadaki "Yol tarifi" butonunu kullanın.',
+      'Aydınlı çevresinde lastiğiniz patladıysa veya aküniz bittiyse arayın ya da WhatsApp\'tan konumunuzu gönderin. Yanınıza gelip yerinde tamir, lastik değişimi veya akü değişimi yapıyoruz.',
+      'Bölgedeki sanayi ve fabrikalara gelen firma araçları, servisler ve kamyonetler için de lastik satış ve değişim yapıyor, firmalarla faturalı çalışıyoruz.',
+      'Yetkili Hankook bayisiyiz; diğer markaların lastiklerini de satıyoruz. Lastik ölçünüzü telefonda söylerseniz stok ve fiyatı hemen veririz.',
     ],
-    focus: ['lastik-degisimi', 'yol-yardim', 'jant-duzeltme-cnc'],
+    focus: ['lastik-degisimi', 'yol-yardim', 'aku', 'jant-duzeltme-cnc'],
+    faq: [
+      { q: 'Aydınlı\'da yerinde lastik değişimi yapıyor musunuz?', a: 'Evet. Aydınlı ve çevresinde lastiğiniz patladıysa arayın, yerinize gelip tamir veya değişim yapalım.' },
+      { q: 'Aydınlı\'ya en yakın açık lastikçi hangi saatlerde çalışıyor?', a: 'Pazartesi–Cumartesi 08:00–23:30, Pazar 12:00–23:30 arası açığız.' },
+      { q: 'Firma araçlarımız için çalışıyor musunuz?', a: 'Evet. Servis, kamyonet ve firma araçlarının lastiklerini yapıyor, faturalı çalışıyoruz.' },
+    ],
   },
   {
     slug: 'orhanli',
     name: 'Orhanlı',
     h1: 'Orhanlı Lastikçi',
-    metaTitle: 'Orhanlı Lastikçi | Tersane Lastik',
-    metaDescription: 'Orhanlı\'ya yakın lastikçi: lastik satış ve değişim, Hankook lastik, jant kumlama ve boyama. 0216 446 15 60',
-    intro: 'Orhanlı\'da oturan veya çalışanlar için lastik değişimi, Hankook lastik ve jant işleri.',
+    metaTitle: 'Orhanlı Lastikçi · Lastik, Jant, Akü ve Yol Yardım | Tersane Lastik',
+    metaDescription: 'Orhanlı\'ya yakın lastikçi: lastik satış ve değişim, Hankook bayi, jant kumlama, akü ve yerinde yol yardım. Her gün 23:30\'a kadar açık. 0216 446 15 60',
+    intro: 'Orhanlı\'da oturan veya çalışanlar için lastik değişimi, Hankook lastik, jant işleri, akü ve yol yardım.',
     body: [
       'Orhanlı\'dan gelirken önceden arayıp lastik ölçünüzü söylerseniz lastiğinizi hazır tutarız, dükkanda beklemezsiniz.',
-      'Jant kumlama ve boyama için jantlarınızı bırakıp 1–2 iş günü içinde teslim alabilirsiniz.',
+      'Orhanlı\'da lastiğiniz patladıysa veya aküniz bittiyse arayın ya da WhatsApp\'tan konumunuzu gönderin. Yanınıza gelip yerinde lastik tamiri, değişim veya akü değişimi yapıyoruz.',
+      'Jant kumlama ve boyama için jantlarınızı bırakıp 1–2 iş günü içinde teslim alabilirsiniz. Eğilen jantları da düzeltip balansını yapıyoruz.',
+      'Mevsim değişiminde çıkan yaz veya kış lastiklerinizi lastik otelimizde saklıyor, sezon gelince takıyoruz.',
     ],
-    focus: ['hankook-lastik', 'jant-kumlama-boyama', 'lastik-degisimi'],
+    focus: ['hankook-lastik', 'yol-yardim', 'aku', 'jant-kumlama-boyama', 'lastik-oteli'],
+    faq: [
+      { q: 'Orhanlı\'da yol yardım var mı?', a: 'Evet. Orhanlı ve çevresinde lastiğiniz patladıysa veya aküniz bittiyse arayın, yerinize gelelim.' },
+      { q: 'Orhanlı\'ya yakın lastikçi hangi saatlerde açık?', a: 'Pazartesi–Cumartesi 08:00–23:30, Pazar 12:00–23:30 arası açığız.' },
+      { q: 'Hankook lastik fiyatı alabilir miyim?', a: 'Evet, yetkili Hankook bayisiyiz. Lastik ölçünüzü söyleyin, stok ve fiyatı hemen verelim.' },
+    ],
   },
   {
     slug: 'icmeler',
     name: 'İçmeler',
     h1: 'İçmeler Lastikçi',
     metaTitle: 'İçmeler Lastikçi | Tersane Lastik',
-    metaDescription: 'İçmeler\'e yakın lastikçi: lastik değişimi, balans, jant düzeltme ve yol yardım. Pazar günleri de açık. 0216 446 15 60',
+    metaDescription: 'İçmeler\'e yakın lastikçi: lastik değişimi, balans, jant düzeltme, akü ve yol yardım. Pazar dahil her gün 23:30\'a kadar açık. 0216 446 15 60',
     intro: 'İçmeler ve Tuzla merkez tarafından gelen müşterilerimiz için lastik ve jant hizmetleri.',
     body: [
-      'Pazar günleri de 11:00–18:00 arası açığız; hafta içi vakit bulamıyorsanız hafta sonu gelebilirsiniz.',
+      'Pazar günleri de 12:00–23:30 arası açığız; hafta içi vakit bulamıyorsanız hafta sonu gelebilirsiniz.',
       'Direksiyonda titreme varsa jantınız eğilmiş veya balansı bozulmuş olabilir. Getirin, kontrol edelim.',
     ],
     focus: ['lastik-degisimi', 'jant-duzeltme-cnc', 'yol-yardim'],
@@ -236,11 +281,12 @@ export const areas: Area[] = [
 ];
 
 export const generalFaq = [
-  { q: 'Tuzla\'da gece açık lastikçi var mı?', a: 'Evet. Pazartesi\'den Cumartesi\'ye 23:30\'a kadar, Pazar günü 11:00–18:00 arası açığız.' },
+  { q: 'Tuzla\'da gece açık lastikçi var mı?', a: 'Evet. Pazar dahil her gün 23:30\'a kadar açığız: Pazartesi–Cumartesi 08:00–23:30, Pazar 12:00–23:30.' },
   { q: 'Lastik değişimi ne kadar sürer?', a: 'Dört lastik için sökme, takma ve balans genelde 30–45 dakika sürer. Randevusuz gelebilirsiniz.' },
   { q: 'Jant kumlama ve boyama kaç günde biter?', a: 'Takım jantlar çoğunlukla 1–2 iş gününde teslim edilir. Rengi önceden birlikte seçiyoruz.' },
   { q: 'Eğilen jant düzeltilebilir mi?', a: 'Çoğu eğilme düzeltilebilir. Çatlak veya kırık jantlarda güvenlik için değişim öneriyoruz.' },
   { q: 'Lastik fiyatını telefonda öğrenebilir miyim?', a: 'Evet. Lastiğin yanağındaki ölçüyü (ör. 205/55 R16) söyleyin, stok ve fiyatı hemen verelim.' },
   { q: 'Lastik oteli hizmetiniz var mı?', a: 'Evet. Mevsimi geçen yaz veya kış lastiklerinizi saklıyor, sezon gelince takıyoruz.' },
+  { q: 'Akü satıyor musunuz?', a: 'Evet. Mutlu, İnci, Bosch ve diğer marka aküleri satıyor, dükkanda veya yerinde takıyoruz.' },
   { q: 'Ticari araç ve kamyon lastiği yapıyor musunuz?', a: 'Evet. Servis minibüsü, kamyonet ve kamyon lastiklerinin satış ve değişimini yapıyoruz.' },
 ];
