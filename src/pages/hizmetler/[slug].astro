@@ -10,6 +10,7 @@ export function getStaticPaths() {
 const { s } = Astro.props as { s: Service };
 const site = Astro.site!.toString().replace(/\/$/, '');
 const others = services.filter((x) => x.slug !== s.slug);
+const waLoc = s.whatsappText && business.whatsapp ? `https://wa.me/${business.whatsapp}?text=${encodeURIComponent(s.whatsappText)}` : '';
 const schema = [
   {
     '@context': 'https://schema.org',
@@ -35,6 +36,7 @@ const schema = [
         <h1>{s.h1}</h1>
         <p class="lead">{s.short}</p>
         <CallButtons variant="hero" />
+        {waLoc && <p class="wa-loc"><a class="btn btn-wa" href={waLoc} data-track="whatsapp_konum" rel="noopener">Konumunu WhatsApp'tan gönder</a><span>Mesaj açılınca ataç simgesinden "Konum"u seçin.</span></p>}
       </div>
     </div>
   </section>

@@ -96,6 +96,13 @@ const { demo = false } = Astro.props;
     .plus { color: var(--ok); font-weight: 700 } .minus { color: var(--warn); font-weight: 700 }
     .toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; z-index: 20; max-width: calc(100vw - 32px) }
     .toast.err { background: var(--warn); color: #fff }
+    .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px }
+    .seg button { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 10px 4px; font-weight: 600; font-size: .875rem; cursor: pointer }
+    .seg button[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy) }
+    .badge.depo { background: #dbe7f5; color: #0f2f4f; font-weight: 600 }
+    .cust { background: var(--chip); border-radius: 10px; padding: 10px 12px; font-size: .875rem }
+    .cust b { font-size: 1rem }
+    form.swap .cust-f { display: none !important }
     .proto { background: var(--warn-bg); color: var(--ink); font-size: .8125rem; padding: 8px 16px; text-align: center }
     .login { min-height: 100dvh; display: grid; place-items: center; padding: 16px }
     .login-card { width: min(360px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 14px }
@@ -182,6 +189,7 @@ const { demo = false } = Astro.props;
           <button class="chip" data-v="out" aria-pressed="false">Teslim edilen</button>
           <button class="chip" data-v="" aria-pressed="false">Tümü</button>
         </div>
+        <select class="f" id="depotF" aria-label="Depo"><option value="">Tüm depolar</option></select>
       </div>
       <div class="stats">
         <div class="stat"><b id="hIn">0</b><span>depodaki set</span></div>
@@ -195,7 +203,10 @@ const { demo = false } = Astro.props;
 
     <!-- HAREKETLER -->
     <section id="view-hareket" hidden>
-      <p class="note" style="margin:0 0 12px">Son 100 stok hareketi</p>
+      <div class="bar" style="justify-content:space-between">
+        <p class="note" style="margin:0">Son 100 stok hareketi</p>
+        <button class="btn small danger" id="clearMoves" type="button">Hareketleri temizle</button>
+      </div>
       <div class="list" id="moveList"></div>
     </section>
   </main>
@@ -242,34 +253,40 @@ const { demo = false } = Astro.props;
   <dialog id="hotelDlg">
     <form class="dlg" id="hotelForm" method="dialog">
       <h2 id="hotelTitle">Lastik oteli kaydı</h2>
+      <div class="cust" id="swapCust" hidden></div>
       <div class="grid2">
-        <label class="fld"><span>Ad soyad *</span><input name="name" required maxlength="80" autocomplete="off" /></label>
-        <label class="fld"><span>Telefon *</span><input name="phone" required type="tel" inputmode="tel" placeholder="05xx xxx xx xx" /></label>
-        <label class="fld"><span>Plaka</span><input name="plate" maxlength="20" placeholder="34 ABC 123" style="text-transform:uppercase" /></label>
-        <label class="fld"><span>Araç</span><input name="vehicle" maxlength="80" placeholder="ör. Fiat Doblo" /></label>
+        <label class="fld cust-f"><span>Ad soyad *</span><input name="name" required maxlength="80" autocomplete="off" /></label>
+        <label class="fld cust-f"><span>Telefon *</span><input name="phone" required type="tel" inputmode="tel" placeholder="05xx xxx xx xx" /></label>
+        <label class="fld cust-f"><span>Plaka</span><input name="plate" maxlength="20" placeholder="34 ABC 123" style="text-transform:uppercase" /></label>
+        <label class="fld cust-f"><span>Araç</span><input name="vehicle" maxlength="80" placeholder="ör. Fiat Doblo" /></label>
         <label class="fld"><span>Lastik markası</span><input name="brand" list="brandList" maxlength="60" /></label>
         <label class="fld"><span>Ölçü</span><input name="size" maxlength="40" placeholder="205/55 R16" /></label>
         <label class="fld"><span>Mevsim</span><select name="season"><option value="kis">Kış</option><option value="yaz">Yaz</option><option value="4mevsim">4 mevsim</option></select></label>
         <label class="fld"><span>Adet</span><input name="count" type="number" min="1" max="20" value="4" inputmode="numeric" /></label>
-        <label class="fld"><span>Diş derinliği (mm)</span><input name="tread_mm" inputmode="decimal" placeholder="ör. 6" /></label>
+      </div>
+      <div class="fld"><span>Depo *</span><input type="hidden" name="depot" /><div class="seg" id="depotSeg"></div></div>
+      <div class="grid2">
         <label class="fld"><span>Raf / konum</span><input name="shelf" maxlength="40" placeholder="ör. A-12" /></label>
+        <label class="fld"><span>Diş derinliği (mm)</span><input name="tread_mm" inputmode="decimal" placeholder="ör. 6" /></label>
         <label class="fld"><span>Giriş tarihi</span><input name="check_in" type="date" /></label>
         <label class="fld"><span>Ücret (₺)</span><input name="fee" inputmode="decimal" placeholder="isteğe bağlı" /></label>
       </div>
       <label class="check"><input type="checkbox" name="with_rim" /> Jantlı teslim alındı</label>
       <label class="fld"><span>Not</span><input name="note" maxlength="500" placeholder="ör. sağ ön lastikte yanak hasarı" /></label>
-      <label class="check"><input type="checkbox" name="kvkk_ok" /> Müşteriye kişisel verilerin (ad, telefon, plaka) yalnızca lastik oteli hizmeti için saklanacağı söylendi ve onay alındı.</label>
+      <label class="check cust-f"><input type="checkbox" name="kvkk_ok" /> Müşteriye kişisel verilerin (ad, telefon, plaka) yalnızca lastik oteli hizmeti için saklanacağı söylendi ve onay alındı.</label>
       <div class="dlg-foot">
         <button type="button" class="btn danger left" id="hotelDel" hidden>Sil</button>
         <button type="button" class="btn" data-close>Vazgeç</button>
-        <button type="submit" class="btn primary" value="save">Kaydet</button>
+        <button type="submit" class="btn primary" value="save" id="hotelSave">Kaydet</button>
       </div>
     </form>
   </dialog>
 
   <script>
     type Tire = { id: number; brand: string; model: string; size: string; load_speed: string; season: string; category: string; dot_year: number | null; quantity: number; min_qty: number; price: number | null; note: string; updated_at: string };
-    type Hotel = { id: number; customer_id: number; name: string; phone: string; kvkk_ok: number; plate: string; vehicle: string; brand: string; size: string; season: string; count: number; with_rim: number; tread_mm: number | null; shelf: string; fee: number | null; note: string; check_in: string; check_out: string | null };
+    type Hotel = { id: number; customer_id: number; name: string; phone: string; kvkk_ok: number; plate: string; vehicle: string; brand: string; size: string; season: string; count: number; with_rim: number; tread_mm: number | null; shelf: string; depot: string; fee: number | null; note: string; check_in: string; check_out: string | null };
+    // Lastik oteli depoları (sunucudaki DEPOTS listesiyle aynı olmalı)
+    const DEPOTS = ['Depo Yahya', 'Depo İbrahim', 'Depo Dükkan'];
     type Move = { id: number; tire_id: number; delta: number; reason: string; note: string; user_email: string; created_at: string; brand?: string; model?: string; size?: string };
 
     const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
@@ -288,6 +305,7 @@ const { demo = false } = Astro.props;
     let hotel: Hotel[] = [];
     let season = '';
     let hotelState = 'in';
+    let depotFilter = '';
 
     function toast(msg: string, err = false) {
       const t = document.createElement('div');
@@ -558,14 +576,16 @@ const { demo = false } = Astro.props;
       const list = hotel.filter((h) => {
         if (hotelState === 'in' && h.check_out) return false;
         if (hotelState === 'out' && !h.check_out) return false;
+        if (depotFilter && h.depot !== depotFilter) return false;
         if (!q) return true;
-        const text = lower(`${h.name} ${h.plate} ${h.plate.replace(/\s/g, '')} ${h.vehicle} ${h.brand} ${h.size} ${h.shelf}`);
+        const text = lower(`${h.name} ${h.plate} ${h.plate.replace(/\s/g, '')} ${h.vehicle} ${h.brand} ${h.size} ${h.shelf} ${h.depot}`);
         return text.includes(q) || (qd.length >= 3 && h.phone.includes(qd));
       });
-      const open = hotel.filter((h) => !h.check_out);
+      const inDepot = depotFilter ? hotel.filter((h) => h.depot === depotFilter) : hotel;
+      const open = inDepot.filter((h) => !h.check_out);
       $('#hIn').textContent = String(open.length);
       $('#hTires').textContent = String(open.reduce((a, h) => a + h.count, 0));
-      $('#hCust').textContent = String(new Set(hotel.map((h) => h.customer_id)).size);
+      $('#hCust').textContent = String(new Set(inDepot.map((h) => h.customer_id)).size);
       $('#hotelList').innerHTML = list.length
         ? list.map((h) => {
             const wa = '9' + h.phone;
@@ -573,7 +593,7 @@ const { demo = false } = Astro.props;
               <button class="row-main" data-hedit="${h.id}" aria-label="Düzenle">
                 <div class="size">${esc(h.plate || 'Plakasız')} · ${esc(h.name)}</div>
                 <div class="sub">${h.count} adet ${esc(h.brand)} ${esc(h.size)}${h.with_rim ? ' · jantlı' : ''}${h.shelf ? ' · Raf ' + esc(h.shelf) : ''}</div>
-                <div class="badges"><span class="badge">${SEASON[h.season] || ''}</span><span class="badge">Giriş ${trDate(h.check_in)}</span>${h.check_out ? `<span class="badge ok">Teslim ${trDate(h.check_out)}</span>` : ''}${h.tread_mm != null ? `<span class="badge">${String(h.tread_mm).replace('.', ',')} mm</span>` : ''}${h.kvkk_ok ? '' : '<span class="badge warn">KVKK onayı yok</span>'}</div>
+                <div class="badges">${h.depot ? `<span class="badge depo">${esc(h.depot)}</span>` : '<span class="badge warn">Depo seçilmedi</span>'}<span class="badge">${SEASON[h.season] || ''}</span><span class="badge">Giriş ${trDate(h.check_in)}</span>${h.check_out ? `<span class="badge ok">Teslim ${trDate(h.check_out)}</span>` : ''}${h.tread_mm != null ? `<span class="badge">${String(h.tread_mm).replace('.', ',')} mm</span>` : ''}${h.kvkk_ok ? '' : '<span class="badge warn">KVKK onayı yok</span>'}</div>
               </button>
               <div class="actions">
                 <a class="btn small" href="tel:${esc(h.phone)}">Ara</a>
@@ -596,16 +616,53 @@ const { demo = false } = Astro.props;
       hotel.forEach((x) => { if (x.customer_id === h.customer_id) { x.name = h.name; x.kvkk_ok = h.kvkk_ok; } });
     }
     chipGroup('#hotelChips', (v) => { hotelState = v; renderHotel(); });
+    $('#depotF').innerHTML += DEPOTS.map((d) => `<option>${esc(d)}</option>`).join('');
+    $('#depotF').addEventListener('change', (e) => { depotFilter = (e.target as HTMLSelectElement).value; renderHotel(); });
     $('#hq').addEventListener('input', renderHotel);
 
     let hEditing: Hotel | undefined;
+    // Değişim modunda: teslim edilecek eski kayıt (müşteri yerine yeni lastik bıraktı)
+    let swapFrom: Hotel | undefined;
     const hotelForm = $<HTMLFormElement>('#hotelForm');
+    const today = () => new Date().toISOString().slice(0, 10);
+    $('#depotSeg').innerHTML = DEPOTS.map((d) => `<button type="button" data-depot="${esc(d)}" aria-pressed="false">${esc(d)}</button>`).join('');
+    const depotInput = () => hotelForm.elements.namedItem('depot') as HTMLInputElement;
+    function syncDepot() {
+      $('#depotSeg').querySelectorAll<HTMLElement>('[data-depot]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.depot === depotInput().value)));
+    }
+    $('#depotSeg').addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLElement>('[data-depot]');
+      if (!b) return;
+      depotInput().value = b.dataset.depot!;
+      syncDepot();
+    });
     function openHotel(h?: Hotel) {
       hEditing = h;
+      swapFrom = undefined;
+      hotelForm.classList.remove('swap');
+      $('#swapCust').hidden = true;
+      $('#hotelSave').textContent = 'Kaydet';
       $('#hotelTitle').textContent = h ? 'Kaydı düzenle' : 'Lastik oteli kaydı';
-      fillForm(hotelForm, h || { season: 'kis', count: 4, check_in: new Date().toISOString().slice(0, 10) });
+      fillForm(hotelForm, h || { season: 'kis', count: 4, check_in: today() });
+      syncDepot();
       $('#hotelDel').hidden = !h;
       $<HTMLDialogElement>('#hotelDlg').showModal();
+    }
+    const OTHER_SEASON: Record<string, string> = { kis: 'yaz', yaz: 'kis', '4mevsim': '4mevsim' };
+    function openSwap(old: Hotel) {
+      openHotel();
+      swapFrom = old;
+      hotelForm.classList.add('swap');
+      $('#hotelTitle').textContent = 'Bırakılan lastikler';
+      $('#hotelSave').textContent = 'Kaydet ve teslim et';
+      fillForm(hotelForm, {
+        name: old.name, phone: old.phone, plate: old.plate, vehicle: old.vehicle, kvkk_ok: old.kvkk_ok,
+        season: OTHER_SEASON[old.season] || 'yaz', size: old.size, count: old.count, check_in: today(),
+      });
+      syncDepot();
+      const box = $('#swapCust');
+      box.innerHTML = `<b>${esc(old.name)}</b> · ${esc(old.phone)}<br>${esc(old.plate || 'Plakasız')}${old.vehicle ? ' · ' + esc(old.vehicle) : ''}<br><span style="color:var(--muted)">Teslim edilen: ${old.count} adet ${SEASON[old.season] || ''}${old.depot ? ', ' + esc(old.depot) : ''}</span>`;
+      box.hidden = false;
     }
     $('#addHotel').addEventListener('click', () => openHotel());
     // Telefon girilince kayıtlı müşterinin adını otomatik doldur
@@ -618,7 +675,17 @@ const { demo = false } = Astro.props;
     hotelForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const data = formData(hotelForm);
+      if (!data.depot) return toast('Depo seçin', true);
       run((async () => {
+        if (swapFrom) {
+          const r = await api<{ closed: Hotel; opened: Hotel }>(`hotel/${swapFrom.id}/swap`, { method: 'POST', body: data });
+          upsertHotel(r.closed);
+          upsertHotel(r.opened);
+          renderHotel();
+          $<HTMLDialogElement>('#hotelDlg').close();
+          toast('Eski lastikler teslim edildi, yenileri depoya alındı');
+          return;
+        }
         const h = hEditing ? await api<Hotel>(`hotel/${hEditing.id}`, { method: 'PUT', body: data }) : await api<Hotel>('hotel', { method: 'POST', body: data });
         upsertHotel(h);
         renderHotel();
@@ -651,7 +718,9 @@ const { demo = false } = Astro.props;
       const out = el.closest<HTMLElement>('[data-out]');
       if (out) {
         const h = hotel.find((x) => x.id === Number(out.dataset.out))!;
-        return run(ask(`${h.plate || h.name}: ${h.count} lastik müşteriye teslim edildi olarak işaretlensin mi?`, [['iptal', 'Vazgeç'], ['ok', 'Teslim et', 'primary']]).then(async (a) => {
+        const where = [h.depot, h.shelf ? 'Raf ' + h.shelf : ''].filter(Boolean).join(', ');
+        return run(ask(`${h.plate || 'Plakasız'} · ${h.name}\n${h.count} adet ${SEASON[h.season] || ''} ${h.brand} ${h.size}${where ? ' · ' + where : ''} teslim ediliyor.\n\nMüşteri yerine otele başka lastik bıraktı mı? (ör. çıkan yazlıklar)`, [['iptal', 'Vazgeç'], ['ok', 'Hayır, sadece teslim et'], ['swap', 'Evet, yeni lastik bıraktı', 'primary']]).then(async (a) => {
+          if (a === 'swap') return openSwap(h);
           if (a !== 'ok') return;
           const r = await api<Hotel>(`hotel/${h.id}/checkout`, { method: 'POST', body: {} });
           upsertHotel(r); renderHotel(); toast('Teslim edildi');
@@ -664,14 +733,24 @@ const { demo = false } = Astro.props;
     });
     $('#hotelExport').addEventListener('click', () => {
       download(`lastik-oteli-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([
-        ['Ad soyad', 'Telefon', 'Plaka', 'Araç', 'Marka', 'Ölçü', 'Mevsim', 'Adet', 'Jantlı', 'Diş (mm)', 'Raf', 'Ücret', 'Giriş', 'Teslim', 'Not'],
-        ...hotel.map((h) => [h.name, h.phone, h.plate, h.vehicle, h.brand, h.size, SEASON[h.season], h.count, h.with_rim ? 'Evet' : 'Hayır', h.tread_mm, h.shelf, h.fee, h.check_in, h.check_out, h.note]),
+        ['Ad soyad', 'Telefon', 'Plaka', 'Araç', 'Marka', 'Ölçü', 'Mevsim', 'Adet', 'Jantlı', 'Diş (mm)', 'Depo', 'Raf', 'Ücret', 'Giriş', 'Teslim', 'Not'],
+        ...hotel.map((h) => [h.name, h.phone, h.plate, h.vehicle, h.brand, h.size, SEASON[h.season], h.count, h.with_rim ? 'Evet' : 'Hayır', h.tread_mm, h.depot, h.shelf, h.fee, h.check_in, h.check_out, h.note]),
       ]));
     });
 
     // ---------- Hareketler ----------
+    let moveCount = 0;
+    $('#clearMoves').addEventListener('click', () => {
+      run(ask(`Tüm hareket geçmişi${moveCount ? ` (${moveCount}${moveCount >= 100 ? '+' : ''} kayıt)` : ''} silinsin mi?\n\nLastiklerin stok adetleri değişmez, sadece geçmiş listesi temizlenir. Bu işlem geri alınamaz.`, [['iptal', 'Vazgeç'], ['ok', 'Temizle', 'danger']]).then(async (a) => {
+        if (a !== 'ok') return;
+        const r = await api<{ deleted: number }>('moves', { method: 'DELETE' });
+        await loadMoves();
+        toast(`${r.deleted} hareket silindi`);
+      }));
+    });
     async function loadMoves() {
       const moves = await api<Move[]>('moves');
+      moveCount = moves.length;
       $('#moveList').innerHTML = moves.length
         ? moves.map((m) => `<div class="row"><div><div class="size">${esc(m.size)} · ${esc(m.brand)} ${esc(m.model)}</div><div class="sub">${trDateTime(m.created_at)} · ${REASON[m.reason] || esc(m.reason)}${m.note ? ' · ' + esc(m.note) : ''}${m.user_email ? ' · ' + esc(m.user_email) : ''}</div></div><b class="${m.delta > 0 ? 'plus' : 'minus'}" style="font-size:1.25rem">${m.delta > 0 ? '+' : ''}${m.delta}</b></div>`).join('')
         : '<div class="empty">Henüz hareket yok.</div>';

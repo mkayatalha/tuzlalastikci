@@ -34,7 +34,7 @@ const shop = {
   },
   geo: { '@type': 'GeoCoordinates', latitude: business.geo.lat, longitude: business.geo.lng },
   hasMap: business.mapsUrl,
-  sameAs: [business.instagram],
+  sameAs: [business.instagram, business.mapsUrl],
   openingHoursSpecification: business.hours.map((h) => ({
     '@type': 'OpeningHoursSpecification',
     dayOfWeek: h.schemaDays,
@@ -140,6 +140,7 @@ const jsonLd = [shop, ...crumbs, ...schema];
         <p><a href={`tel:${business.phoneE164}`} data-track="call">{business.phone}</a></p>
         {wa && <p><a href={wa} data-track="whatsapp" rel="noopener">WhatsApp</a></p>}
         <p><a href={business.instagram} rel="noopener">Instagram</a></p>
+        <p><a href={business.reviewUrl} data-track="review" rel="noopener" target="_blank">Google'da yorum yap</a></p>
       </div>
       <div>
         <h2>Hizmetler</h2>

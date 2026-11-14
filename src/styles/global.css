@@ -79,6 +79,10 @@ p { margin: 0 }
 .hero-card dt { color: #b9c7d6 }
 .hero-card dd { margin: 0; font-variant-numeric: tabular-nums }
 .hero-card .rating { font: 700 1.3rem var(--font-display) }
+.wa-loc { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 14px 0 0 }
+.wa-loc span { font-size: .9rem; color: #b9c7d6 }
+.hero-card .review-link { margin: -8px 0 0 }
+.hero-card .review-link a { color: #ffd27a; font-weight: 600 }
 
 /* sections */
 .block { padding-block: 56px }

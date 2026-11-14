@@ -2,6 +2,8 @@
 
 const SEASONS = ['yaz', 'kis', '4mevsim'];
 const CATEGORIES = ['binek', 'suv', 'hafif_ticari', 'agir_ticari'];
+// Lastik oteli depoları. İsim değişirse panel arayüzündeki DEPOTS listesi de değişmeli.
+const DEPOTS = ['Depo Yahya', 'Depo İbrahim', 'Depo Dükkan'];
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -63,6 +65,8 @@ function tireFields(b) {
 }
 
 function hotelFields(b) {
+  const depot = str(b.depot, 40);
+  if (!DEPOTS.includes(depot)) throw new HttpError(400, 'Depo seçilmeli.');
   return {
     plate: str(b.plate, 20).toUpperCase().replace(/\s+/g, ' '),
     vehicle: str(b.vehicle, 80),
@@ -73,6 +77,7 @@ function hotelFields(b) {
     with_rim: b.with_rim ? 1 : 0,
     tread_mm: num(b.tread_mm),
     shelf: str(b.shelf, 40),
+    depot,
     fee: num(b.fee),
     note: str(b.note, 500),
     check_in: date(b.check_in) || new Date().toISOString().slice(0, 10),
@@ -196,6 +201,12 @@ export async function onRequest({ request, env, params, data }) {
     }
   }
 
+  // Hareket geçmişini temizler. Lastiklerin stok adetleri değişmez.
+  if (res === 'moves' && !id && m === 'DELETE') {
+    const r = await db.prepare('DELETE FROM stock_moves').run();
+    return json({ deleted: r.meta.changes || 0 });
+  }
+
   if (res === 'moves' && !id && m === 'GET') {
     const { results } = await db
       .prepare(
@@ -239,6 +250,28 @@ export async function onRequest({ request, env, params, data }) {
       const out = action === 'checkout' ? date(b.date) || new Date().toISOString().slice(0, 10) : null;
       await db.prepare('UPDATE hotel SET check_out = ? WHERE id = ?').bind(out, id).run();
       return json(await db.prepare(`${HOTEL_SELECT} WHERE h.id = ?`).bind(id).first());
+    }
+    // Değişim: eski set teslim edilir, müşterinin bıraktığı yeni set aynı müşteriyle depoya girer.
+    // İkisi tek seferde (transaction) yapılır; biri olmazsa hiçbiri olmaz.
+    if (id && action === 'swap' && m === 'POST') {
+      const old = await db.prepare('SELECT customer_id, check_out FROM hotel WHERE id = ?').bind(id).first();
+      if (!old) throw new HttpError(404, 'Kayıt bulunamadı.');
+      if (old.check_out) throw new HttpError(409, 'Bu kayıt zaten teslim edilmiş.');
+      const h = hotelFields(await body(request));
+      const today = new Date().toISOString().slice(0, 10);
+      const cols = Object.keys(h);
+      const [upd, ins] = await db.batch([
+        db.prepare('UPDATE hotel SET check_out = ? WHERE id = ? AND check_out IS NULL').bind(today, id),
+        db
+          .prepare(`INSERT INTO hotel (customer_id, ${cols.join(',')}) VALUES (?, ${cols.map(() => '?').join(',')}) RETURNING id`)
+          .bind(old.customer_id, ...cols.map((c) => h[c])),
+      ]);
+      const newId = ins.results?.[0]?.id;
+      const [closed, opened] = await Promise.all([
+        db.prepare(`${HOTEL_SELECT} WHERE h.id = ?`).bind(id).first(),
+        db.prepare(`${HOTEL_SELECT} WHERE h.id = ?`).bind(newId).first(),
+      ]);
+      return json({ closed, opened }, 201);
     }
     if (id && !action && m === 'DELETE') {
       await db.prepare('DELETE FROM hotel WHERE id = ?').bind(id).run();
